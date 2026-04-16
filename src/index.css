@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #0166FF;
+  /* Electric Blue */
+  --color-primary-dark: #004ec2;
+  --color-secondary: #001F3F;
+  /* Midnight Blue */
+  --color-accent: #00FFFF;
+  /* Cyan Accent */
+  --color-background: #001226;
+  /* Dark Navy Background */
+  --color-surface: #0a254a;
+  /* Slightly lighter navy for cards */
+  --color-text: #E0E0E0;
+  /* Light Grey Text */
+  --color-text-muted: #A0A0A0;
+  /* Muted Text */
+  --color-heading: #FFFFFF;
+  /* White Headings */
+
+  --font-sans: Manrope, sans-serif;
+  --font-heading: Oswald, sans-serif;
+
+  --animate-tilt: tilt 10s infinite linear;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text);
+  }
+}
