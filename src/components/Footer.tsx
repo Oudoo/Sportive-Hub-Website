@@ -1,6 +1,7 @@
 import React from 'react';
 import { Facebook, Instagram, Twitter, Phone, Mail, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
     return (
@@ -14,9 +15,9 @@ const Footer: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
                     {/* Brand */}
                     <div>
-                        <a href="#" className="mb-6 block">
+                        <Link to="/" className="mb-6 block">
                             <img src="/logo.png" alt="Sportive Hub" className="h-12 w-auto brightness-0 invert" />
-                        </a>
+                        </Link>
                         <p className="text-gray-400 mb-6 leading-relaxed">
                             Empowering athletes and individuals to recover faster, perform better, and live pain-free through expert care and modern technology.
                         </p>
@@ -37,10 +38,10 @@ const Footer: React.FC = () => {
                     <div>
                         <h4 className="text-lg font-bold mb-6 text-white">Quick Links</h4>
                         <ul className="space-y-4">
-                            <li><a href="#home" className="text-gray-400 hover:text-primary transition-colors">Home</a></li>
-                            <li><a href="#services" className="text-gray-400 hover:text-primary transition-colors">Services</a></li>
-                            <li><a href="#locations" className="text-gray-400 hover:text-primary transition-colors">Locations</a></li>
-                            <li><a href="#about" className="text-gray-400 hover:text-primary transition-colors">About Us</a></li>
+                            <li><Link to="/#home" className="text-gray-400 hover:text-primary transition-colors">Home</Link></li>
+                            <li><Link to="/services" className="text-gray-400 hover:text-primary transition-colors">Services</Link></li>
+                            <li><Link to="/#locations" className="text-gray-400 hover:text-primary transition-colors">Locations</Link></li>
+                            <li><Link to="/#about" className="text-gray-400 hover:text-primary transition-colors">About Us</Link></li>
                         </ul>
                     </div>
 
@@ -48,11 +49,11 @@ const Footer: React.FC = () => {
                     <div>
                         <h4 className="text-lg font-bold mb-6 text-white">Services</h4>
                         <ul className="space-y-4">
-                            <li className="text-gray-400">Physiotherapy</li>
-                            <li className="text-gray-400">Sports Massage</li>
-                            <li className="text-gray-400">Cryotherapy</li>
-                            <li className="text-gray-400">Performance Testing</li>
-                            <li className="text-gray-400">Rehabilitation</li>
+                            <li><Link to="/services#physical-therapy" className="text-gray-400 hover:text-primary transition-colors">Physical Therapy</Link></li>
+                            <li><Link to="/services#iv-drips" className="text-gray-400 hover:text-primary transition-colors">IV Drips</Link></li>
+                            <li><Link to="/services#ems-suits" className="text-gray-400 hover:text-primary transition-colors">EMS Suits</Link></li>
+                            <li><Link to="/services#nutrition" className="text-gray-400 hover:text-primary transition-colors">Nutrition</Link></li>
+                            <li><Link to="/services#psychiatry" className="text-gray-400 hover:text-primary transition-colors">Psychiatry</Link></li>
                         </ul>
                     </div>
 

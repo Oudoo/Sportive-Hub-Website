@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, MapPin } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Hero: React.FC = () => {
     const ref = useRef(null);
@@ -74,22 +75,22 @@ const Hero: React.FC = () => {
                             variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
                             className="flex flex-col sm:flex-row gap-6"
                         >
-                            <a
-                                href="#contact"
+                            <Link
+                                to="/#contact"
                                 className="group relative px-8 py-4 bg-primary text-white overflow-hidden rounded-none font-bold text-lg tracking-wider uppercase clip-path-slant"
                             >
                                 <span className="relative z-10 flex items-center gap-2">
                                     Start Recovery <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                                 </span>
                                 <div className="absolute inset-0 bg-white transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300 mix-blend-overlay"></div>
-                            </a>
+                            </Link>
 
-                            <a
-                                href="#locations"
+                            <Link
+                                to="/#locations"
                                 className="group px-8 py-4 border border-white/30 text-white hover:bg-white/10 transition-all font-bold text-lg tracking-wider uppercase flex items-center justify-center gap-2 backdrop-blur-sm"
                             >
                                 Our Locations <MapPin size={20} />
-                            </a>
+                            </Link>
                         </motion.div>
                     </motion.div>
                 </div>

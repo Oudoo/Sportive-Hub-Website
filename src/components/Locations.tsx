@@ -6,18 +6,15 @@ const Locations: React.FC = () => {
     const locations = [
         {
             name: 'Beverly Sheikh Zayed',
-            address: 'Beverly Hills Compound, Sheikh Zayed City',
-            image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        },
-        {
-            name: 'Mivida 5th Settlement',
-            address: 'Mivida Business Park, New Cairo',
-            image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+            address: 'Sodic Medical District, Building 4 - 2nd floor, Clinic 212\nسوديك مبنى الدائري, مبنى ٤ - الدور الثاني, عياده ٢١٢',
+            lat: 30.068115,
+            lng: 30.933786,
         },
         {
             name: 'Almaza Bay North Coast',
             address: 'Almaza Bay Resort, Mersa Matruh',
-            image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+            lat: 31.197220,
+            lng: 27.553516,
         },
     ];
 
@@ -52,7 +49,7 @@ const Locations: React.FC = () => {
                     </motion.p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
                     {locations.map((location, index) => (
                         <motion.div
                             key={index}
@@ -60,32 +57,35 @@ const Locations: React.FC = () => {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: index * 0.2, duration: 0.6 }}
-                            className="group relative h-[500px] overflow-hidden rounded-none border-b-2 border-primary/0 hover:border-primary transition-colors duration-300"
+                            className="group relative h-[500px] overflow-hidden bg-gray-900 border border-white/10 hover:border-primary transition-colors duration-300 flex flex-col"
                         >
-                            <div className="absolute inset-0 bg-gray-900 z-0">
-                                <img
-                                    src={location.image}
-                                    alt={location.name}
-                                    className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110 opacity-60 group-hover:opacity-40"
-                                />
+                            <div className="flex-1 w-full h-full relative z-0">
+                                <iframe 
+                                    width="100%" 
+                                    height="100%" 
+                                    style={{ border: 0, filter: 'grayscale(1) contrast(1.2) opacity(0.8)' }} 
+                                    loading="lazy" 
+                                    allowFullScreen 
+                                    src={`https://maps.google.com/maps?q=${location.lat},${location.lng}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                                ></iframe>
                             </div>
 
-                            <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-90"></div>
-
-                            <div className="absolute bottom-0 left-0 p-8 w-full z-10 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                            <div className="bg-black/80 backdrop-blur-md p-8 relative z-10 border-t border-white/5">
                                 <div className="flex items-start gap-3 mb-4">
-                                    <div className="p-2 bg-primary/20 rounded-full backdrop-blur-sm">
+                                    <div className="p-2 bg-primary/20 rounded-full shrink-0">
                                         <MapPin className="text-primary" size={24} />
                                     </div>
                                     <div>
                                         <h4 className="text-2xl font-heading font-bold text-white leading-tight mb-2 group-hover:text-primary transition-colors">{location.name}</h4>
-                                        <p className="text-gray-400 text-sm">{location.address}</p>
+                                        <p className="text-gray-400 text-sm whitespace-pre-line">{location.address}</p>
                                     </div>
                                 </div>
 
                                 <motion.a
-                                    href="#"
-                                    className="inline-flex items-center gap-2 text-white font-bold uppercase tracking-wider text-sm border-b border-primary pb-1 hover:text-primary transition-colors opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 delay-100"
+                                    href={`https://www.google.com/maps/dir/?api=1&destination=${location.lat},${location.lng}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 text-white font-bold uppercase tracking-wider text-sm border-b border-primary pb-1 hover:text-primary transition-colors"
                                 >
                                     Get Directions <ArrowUpRight size={16} />
                                 </motion.a>
