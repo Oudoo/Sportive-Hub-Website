@@ -26,51 +26,52 @@ const ServicesPage: React.FC = () => {
             icon: <Activity size={60} />,
             title: 'Physical Therapy',
             description: 'Our physical therapy programs are designed to restore mobility, reduce pain, and improve overall physical function. We utilize evidence-based treatments and personalized exercise regimens to help you recover from injuries and prevent future ones.',
-            image: 'https://images.unsplash.com/photo-1576678927484-cc907957088c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
+            image: '/services/Physical-therapy-3.jpg',
         },
         {
             id: 'iv-drips',
             icon: <Droplet size={60} />,
             title: 'IV Drips',
             description: 'Replenish your body\'s essential vitamins and minerals directly into your bloodstream. Our customized IV therapies target hydration, immunity boosting, energy enhancement, and rapid athletic recovery.',
-            image: 'https://images.unsplash.com/photo-1628102491629-778571d893a3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
+            image: '/services/Iv-drips--2.jpg',
         },
         {
             id: 'ems-suits',
             icon: <Zap size={60} />,
             title: 'EMS Suits',
             description: 'Experience the future of fitness with our EMS (Electrical Muscle Stimulation) suits. In just 20 minutes, achieve the results of a 90-minute conventional workout, enhancing muscle strength, endurance, and fat loss safely.',
-            image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
+            image: '/services/Ems-suits--5.jpg',
         },
         {
             id: 'nutrition',
             icon: <Apple size={60} />,
             title: 'Nutrition',
             description: 'Achieve your wellness goals from the inside out. Our clinical nutritionists provide tailored meal plans, dietary counseling, and ongoing support to optimize your athletic performance and daily energy levels.',
-            image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
+            image: '/services/nutrition.png',
         },
         {
             id: 'psychiatry',
             icon: <Brain size={60} />,
             title: 'Psychiatry',
             description: 'Mental resilience is key to peak performance. We offer expert psychiatric care and counseling to address sports-related anxiety, performance pressure, and overall mental well-being.',
-            image: 'https://images.unsplash.com/photo-1554147090-e1221a04a025?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
+            image: '/services/psychiatry.png',
         },
         {
             id: 'ortho',
             icon: <Bone size={60} />,
             title: 'Ortho',
             description: 'Comprehensive orthopedic assessments and non-invasive treatments for acute and chronic musculoskeletal conditions. We focus on healing your bones, joints, ligaments, tendons, and muscles.',
-            image: 'https://images.unsplash.com/photo-1581594693702-fbdc51b2763b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
+            image: '/services/ortho.png',
         },
         {
             id: 'neuro',
             icon: <Network size={60} />,
             title: 'Neuro',
             description: 'Advanced neurological screening and rehabilitation to treat nerve injuries, improve motor control, and enhance mind-muscle connection for superior athletic output.',
-            image: 'https://images.unsplash.com/photo-1559757175-5700dde675bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
+            image: '/services/Neuro-2.jpg',
         },
     ];
+
 
     return (
         <div className="pt-24 pb-12 bg-background">
@@ -78,7 +79,7 @@ const ServicesPage: React.FC = () => {
                 <motion.h1 
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-5xl md:text-7xl font-heading font-bold text-white uppercase mt-12 mb-6"
+                    className="text-5xl md:text-7xl font-heading font-bold text-heading uppercase mt-12 mb-6"
                 >
                     Our <span className="text-primary">Services</span>
                 </motion.h1>
@@ -86,7 +87,7 @@ const ServicesPage: React.FC = () => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.2 }}
-                    className="text-xl text-gray-400 max-w-2xl mx-auto"
+                    className="text-xl text-text max-w-2xl mx-auto"
                 >
                     Explore our integrated healthcare and performance services tailored to your unique goals.
                 </motion.p>
@@ -112,8 +113,9 @@ const ServicesPage: React.FC = () => {
                                     <img 
                                         src={service.image} 
                                         alt={service.title} 
-                                        className="w-full h-[400px] object-cover relative z-10 border border-white/10"
+                                        className="w-full h-[600px] object-cover relative z-10 border border-primary/10"
                                     />
+
                                 </motion.div>
                                 
                                 <motion.div 
@@ -125,16 +127,21 @@ const ServicesPage: React.FC = () => {
                                     <div className="text-primary mb-4">
                                         {service.icon}
                                     </div>
-                                    <h2 className="text-4xl md:text-5xl font-heading font-bold text-white uppercase">
+                                    <h2 className="text-4xl md:text-5xl font-heading font-bold text-heading uppercase">
                                         {service.title}
                                     </h2>
                                     <div className="w-20 h-1 bg-primary"></div>
-                                    <p className="text-xl text-gray-300 leading-relaxed font-light">
+                                    <p className="text-xl text-text leading-relaxed font-light">
                                         {service.description}
                                     </p>
-                                    <button className="mt-8 px-8 py-3 bg-white/10 hover:bg-primary text-white uppercase tracking-wider font-bold transition-all border border-white/20 hover:border-primary">
+                                    <a 
+                                        href="https://wa.me/201035555380?text=Hello%20can%20I%20make%20a%20booking%20at%20Sportive%20Hub%3F"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-block mt-8 px-8 py-3 bg-surface hover:bg-primary text-primary hover:text-white uppercase tracking-wider font-bold transition-all border border-primary/20 hover:border-primary"
+                                    >
                                         Book Consultation
-                                    </button>
+                                    </a>
                                 </motion.div>
                             </div>
                         </section>

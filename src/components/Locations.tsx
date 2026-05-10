@@ -34,16 +34,18 @@ const Locations: React.FC = () => {
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.1 }}
-                            className="text-4xl md:text-6xl font-heading font-bold text-white uppercase"
+                            className="text-4xl md:text-6xl font-heading font-bold text-heading uppercase"
                         >
-                            Our <span className="text-stroke-2 text-transparent bg-clip-text bg-white/20">Locations</span>
+                            Our <span className="text-primary">Locations</span>
                         </motion.h3>
+
+
                     </div>
                     <motion.p
                         initial={{ opacity: 0 }}
                         whileInView={{ opacity: 1 }}
                         transition={{ delay: 0.2 }}
-                        className="text-gray-400 max-w-md text-right md:text-lg"
+                        className="text-text max-w-md text-right md:text-lg"
                     >
                         Visit us at our premium facilities designed for elite recovery and performance.
                     </motion.p>
@@ -57,27 +59,27 @@ const Locations: React.FC = () => {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: index * 0.2, duration: 0.6 }}
-                            className="group relative h-[500px] overflow-hidden bg-gray-900 border border-white/10 hover:border-primary transition-colors duration-300 flex flex-col"
+                            className="group relative h-[500px] overflow-hidden bg-white shadow-lg border border-primary/10 hover:border-primary/40 hover:shadow-[0_20px_50px_-12px_rgba(1,102,255,0.15)] transition-all duration-500 flex flex-col rounded-xl"
                         >
                             <div className="flex-1 w-full h-full relative z-0">
-                                <iframe 
-                                    width="100%" 
-                                    height="100%" 
-                                    style={{ border: 0, filter: 'grayscale(1) contrast(1.2) opacity(0.8)' }} 
-                                    loading="lazy" 
-                                    allowFullScreen 
+                                <iframe
+                                    width="100%"
+                                    height="100%"
+                                    style={{ border: 0 }}
+                                    loading="lazy"
+                                    allowFullScreen
                                     src={`https://maps.google.com/maps?q=${location.lat},${location.lng}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
                                 ></iframe>
                             </div>
 
-                            <div className="bg-black/80 backdrop-blur-md p-8 relative z-10 border-t border-white/5">
+                            <div className="bg-surface/80 backdrop-blur-md p-8 relative z-10 border-t border-primary/10">
                                 <div className="flex items-start gap-3 mb-4">
                                     <div className="p-2 bg-primary/20 rounded-full shrink-0">
                                         <MapPin className="text-primary" size={24} />
                                     </div>
                                     <div>
-                                        <h4 className="text-2xl font-heading font-bold text-white leading-tight mb-2 group-hover:text-primary transition-colors">{location.name}</h4>
-                                        <p className="text-gray-400 text-sm whitespace-pre-line">{location.address}</p>
+                                        <h4 className="text-2xl font-heading font-bold text-heading leading-tight mb-2 group-hover:text-primary transition-colors">{location.name}</h4>
+                                        <p className="text-text text-sm whitespace-pre-line">{location.address}</p>
                                     </div>
                                 </div>
 
@@ -85,7 +87,7 @@ const Locations: React.FC = () => {
                                     href={`https://www.google.com/maps/dir/?api=1&destination=${location.lat},${location.lng}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 text-white font-bold uppercase tracking-wider text-sm border-b border-primary pb-1 hover:text-primary transition-colors"
+                                    className="inline-flex items-center gap-2 text-primary font-bold uppercase tracking-wider text-sm border-b border-primary pb-1 hover:text-primary-dark transition-colors"
                                 >
                                     Get Directions <ArrowUpRight size={16} />
                                 </motion.a>

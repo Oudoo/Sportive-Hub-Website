@@ -26,7 +26,7 @@ const Hero: React.FC = () => {
                     className="w-full h-full object-cover scale-110"
                 />
                 {/* Cinematic Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent"></div>
                 <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
             </motion.div>
 
@@ -66,7 +66,7 @@ const Hero: React.FC = () => {
                         <motion.p
                             variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
                             transition={{ duration: 0.8, delay: 0.2 }}
-                            className="text-xl md:text-2xl text-gray-300 mb-10 max-w-xl leading-relaxed font-light"
+                            className="text-xl md:text-2xl text-text mb-10 max-w-xl leading-relaxed font-light"
                         >
                             The premier hub for sports recovery, physiotherapy, and modern medical care designed for peak performance.
                         </motion.p>
@@ -75,19 +75,21 @@ const Hero: React.FC = () => {
                             variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
                             className="flex flex-col sm:flex-row gap-6"
                         >
-                            <Link
-                                to="/#contact"
+                            <a
+                                href="https://wa.me/201035555380?text=Hello%20can%20I%20make%20a%20booking%20at%20Sportive%20Hub%3F"
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="group relative px-8 py-4 bg-primary text-white overflow-hidden rounded-none font-bold text-lg tracking-wider uppercase clip-path-slant"
                             >
                                 <span className="relative z-10 flex items-center gap-2">
                                     Start Recovery <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                                 </span>
                                 <div className="absolute inset-0 bg-white transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300 mix-blend-overlay"></div>
-                            </Link>
+                            </a>
 
                             <Link
                                 to="/#locations"
-                                className="group px-8 py-4 border border-white/30 text-white hover:bg-white/10 transition-all font-bold text-lg tracking-wider uppercase flex items-center justify-center gap-2 backdrop-blur-sm"
+                                className="group px-8 py-4 border border-primary/30 text-primary hover:bg-primary/5 transition-all font-bold text-lg tracking-wider uppercase flex items-center justify-center gap-2 backdrop-blur-sm"
                             >
                                 Our Locations <MapPin size={20} />
                             </Link>
@@ -101,10 +103,10 @@ const Hero: React.FC = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1, y: [0, 10, 0] }}
                 transition={{ delay: 1, duration: 2, repeat: Infinity }}
-                className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/50 text-sm tracking-widest uppercase flex flex-col items-center gap-2"
+                className="absolute bottom-10 left-1/2 -translate-x-1/2 text-primary/70 text-sm tracking-widest uppercase flex flex-col items-center gap-2"
             >
                 Scroll
-                <div className="w-[1px] h-10 bg-gradient-to-b from-white to-transparent"></div>
+                <div className="w-[1px] h-10 bg-gradient-to-b from-primary to-transparent"></div>
             </motion.div>
         </section>
     );

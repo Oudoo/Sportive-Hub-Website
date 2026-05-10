@@ -19,17 +19,18 @@ const About: React.FC = () => {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: 0.1 }}
-                        className="text-4xl md:text-6xl font-heading font-bold text-white uppercase mb-12"
+                        className="text-4xl md:text-6xl font-heading font-bold text-heading uppercase mb-12"
                     >
-                        <span className="text-stroke-2 text-transparent bg-clip-text bg-white/20">About</span> Us
+                        <span className="text-primary">About</span> Us
                     </motion.h3>
+
                     
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: 0.2 }}
-                        className="space-y-6 text-xl text-gray-300 font-light leading-relaxed text-left md:text-center"
+                        className="space-y-6 text-xl text-text font-light leading-relaxed text-left md:text-center"
                     >
                         <p>
                             At Sportive Hub, we redefine the concept of wellness by delivering a premium, integrated healthcare experience.
@@ -40,7 +41,7 @@ const About: React.FC = () => {
                         <p>
                             We focus on personalized care, evidence-based treatment, and a results-driven approach—ensuring every client receives a tailored journey that fits their goals and lifestyle.
                         </p>
-                        <p className="text-2xl font-bold text-white mt-8 pt-8 border-t border-white/10">
+                        <p className="text-2xl font-bold text-heading mt-8 pt-8 border-t border-primary/10">
                             Sportive Hub is not just a clinic… <span className="text-primary">it’s your wellness destination.</span>
                         </p>
                     </motion.div>
