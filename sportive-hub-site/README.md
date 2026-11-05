@@ -13,7 +13,9 @@ Static site, no build step. Plain HTML, CSS and JS. Hosted on Hostinger at https
 
 ## Files
 
-- `assets/` holds images, the logo and `exercises.js` (the exercise data that `where-it-hurts.html` uses)
+- `assets/` holds images, the logo and `exercises.js` (the exercise data that `where-it-hurts.html` uses), plus `icon-192.png` and `og-image.jpg` (the 1200×630 link-preview image)
+- `favicon.ico` and `apple-touch-icon.png` sit at the root because browsers and iPhones request them there by default. The icon is the script "i" from the logo, milk on olive.
+- Each page has link-preview (Open Graph) tags and a canonical address on https://sportive-hub.com
 - `video/` holds the exercise clips (`bridge.mp4`, `birddog.mp4`)
 - `.htaccess` is the Hostinger server config: forces HTTPS, serves `/links` and `/where-it-hurts` without `.html`, and redirects the `.html` addresses to them
 - `vercel.json` is only for the Vercel preview: clean URLs plus a `noindex, nofollow` header, so the preview copy stays out of search. The pages themselves have no noindex tag.
@@ -35,12 +37,12 @@ Then open http://localhost:8765. Clean URLs only work on the server (`.htaccess`
 
 ## Deploy to Hostinger
 
-Only these go on the server: `.htaccess`, `index.html`, `links.html`, `where-it-hurts.html` and `assets/`. Leave out `motion-test.html` and `video/` (an unlinked test page and its clips), `README.md`, `vercel.json` and `.gitignore`.
+Only these go on the server: `.htaccess`, `index.html`, `links.html`, `where-it-hurts.html`, `favicon.ico`, `apple-touch-icon.png` and `assets/`. Leave out `motion-test.html` and `video/` (an unlinked test page and its clips), `README.md`, `vercel.json` and `.gitignore`.
 
 Build the upload zip from this folder:
 
 ```bash
-zip -r ../sportive-hub-hostinger.zip .htaccess index.html links.html where-it-hurts.html assets
+zip -r ../sportive-hub-hostinger.zip .htaccess index.html links.html where-it-hurts.html favicon.ico apple-touch-icon.png assets
 ```
 
 Then either deploy it with the Hostinger API (static website deploy for `sportive-hub.com`), or in hPanel open File Manager for sportive-hub.com, upload the zip into `public_html` and extract it there. Deploying replaces what is in `public_html`, so take a backup first.
