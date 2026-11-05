@@ -1,5 +1,5 @@
-# Sportive Hub static site on Hostinger (LiteSpeed / Apache).
-# Does on Hostinger what vercel.json does on Vercel: clean URLs, plus forced HTTPS.
+# Sportive Hub on Hostinger (LiteSpeed, reads Apache rules).
+# Forces HTTPS and serves short URLs: /links and /where-it-hurts instead of the .html names.
 
 DirectoryIndex index.html
 
@@ -14,7 +14,7 @@ DirectoryIndex index.html
   RewriteCond %{THE_REQUEST} \s/+index\.html[\s?] [NC]
   RewriteRule ^ / [L,R=301]
 
-  # /links.html -> /links (one address per page, like Vercel's cleanUrls).
+  # /links.html -> /links, so each page has one address.
   RewriteCond %{THE_REQUEST} \s/+([^\s?]+?)\.html[\s?] [NC]
   RewriteRule ^ /%1 [L,R=301,NE]
 
