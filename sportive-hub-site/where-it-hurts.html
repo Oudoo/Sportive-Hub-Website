@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Where It Hurts · Sportive Hub</title>
+<meta name="description" content="Tap where it hurts on a 3D body and get the home exercises our physiotherapists start people on, for neck, back, shoulder, knee and more. Free, no sign-up.">
+<link rel="canonical" href="https://sportive-hub.com/where-it-hurts">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Sportive Hub">
+<meta property="og:url" content="https://sportive-hub.com/where-it-hurts">
+<meta property="og:title" content="Where does it hurt? · Sportive Hub">
+<meta property="og:description" content="Tap where it hurts on a 3D body and get the home exercises our physiotherapists start people on, for neck, back, shoulder, knee and more. Free, no sign-up.">
+<meta property="og:image" content="https://sportive-hub.com/assets/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Sportive Hub, Movement Lab. Move well. Feel better. Live fully.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+/* Layout: split screen. A sticky 3D stage on olive (the body you tap) beside a milk panel of area chips and exercises. Phones stack stage over panel. */
+:root{
+  --olive:#595641;--sand:#BAA48D;--milk:#F0ECE3;--pastel:#C9D6B8;--charcoal:#282828;--logo-white:#FFFFFF;
+  --rule:rgba(40,40,40,.18);--rule-dark:rgba(240,236,227,.2);
+  --font-sans:"Helvetica Neue","Helvetica Now Display",Helvetica,Arial,sans-serif;
+  --font-serif:"Instrument Serif",Georgia,"Times New Roman",serif;
+  --gutter:max(16px,env(safe-area-inset-left,0px));--gutter-r:max(16px,env(safe-area-inset-right,0px));
+  --nav-h:68px;
+  --z-hot:2;--z-ui:3;--z-nav:20;
+  color-scheme:light;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--milk);color:var(--charcoal);font-family:var(--font-sans);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:clip}
+img{max-width:100%;display:block}
+[hidden]{display:none!important}
+h1,h2,h3{margin:0;font-weight:500;text-wrap:balance}
+p{margin:0;text-wrap:pretty}
+em{font-family:var(--font-serif);font-style:italic;font-weight:400;letter-spacing:0}
+button{font:inherit;color:inherit}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--olive);outline-offset:3px}
+
+/* nav */
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:var(--z-nav);height:var(--nav-h);display:flex;align-items:center;justify-content:space-between;gap:1rem;padding-left:var(--gutter);padding-right:var(--gutter-r);background:var(--milk);border-bottom:1px solid var(--rule)}
+.logo{display:inline-flex;padding-block:7px;text-decoration:none}
+.logo-img{display:block;height:clamp(30px,3vw,36px);aspect-ratio:2251/520;background-color:var(--logo-ink,var(--olive));-webkit-mask:url("assets/logo.png") center/contain no-repeat;mask:url("assets/logo.png") center/contain no-repeat}
+.nav .links{display:flex;align-items:center;gap:clamp(12px,2vw,28px)}
+.nav .home{font-size:12px;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;display:inline-flex;align-items:center;min-height:44px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.8em;min-height:44px;padding:0 1.2em;border:1px solid currentColor;border-radius:2px;background:transparent;text-decoration:none;font-size:12px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background-color .25s,color .25s,border-color .25s}
+.btn svg{width:14px;height:14px;flex:none;transition:transform .35s cubic-bezier(.22,1,.36,1)}
+.btn:hover svg{transform:translateX(4px)}
+.btn.fill{background:var(--charcoal);color:var(--milk);border-color:var(--charcoal)}
+.btn.fill:hover{background:var(--olive);border-color:var(--olive)}
+.btn.milk{background:var(--milk);color:var(--olive);border-color:var(--milk)}
+.btn.milk:hover{background:var(--pastel);border-color:var(--pastel)}
+@media (max-width:560px){.nav .home{display:none}.nav .btn .long{display:none}}
+
+/* layout */
+.app{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);align-items:start}
+.stage{position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--nav-h));height:calc(100svh - var(--nav-h) - env(safe-area-inset-top,0px));min-height:520px;overflow:hidden;color:var(--milk);
+  background:radial-gradient(120% 80% at 50% 38%, color-mix(in srgb,var(--olive) 86%,var(--milk)) 0%, var(--olive) 58%, color-mix(in srgb,var(--olive) 82%,var(--charcoal)) 100%)}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:pan-y;cursor:grab}
+.stage canvas:active{cursor:grabbing}
+.stage .title{position:absolute;left:var(--gutter);right:var(--gutter-r);top:clamp(16px,2.4vw,28px);z-index:var(--z-ui);pointer-events:none}
+.stage .title{transition:opacity .4s,transform .5s cubic-bezier(.22,1,.36,1)}
+.stage.focused .title{opacity:0;transform:translateY(-8px)}
+.stage h1{font-size:clamp(1.6rem,2.6vw,2.6rem);line-height:.95;letter-spacing:-.035em;text-transform:uppercase}
+.stage h1 em{text-transform:none;font-size:1.06em}
+.stage .hint{position:absolute;left:var(--gutter);top:calc(clamp(16px,2.4vw,28px) + clamp(1.6rem,2.6vw,2.6rem) + 14px);z-index:var(--z-ui);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(240,236,227,.85);pointer-events:none;white-space:nowrap;transition:opacity .5s}
+.stage .hint.gone{opacity:0}
+.controls{position:absolute;left:0;right:0;bottom:clamp(16px,3vh,28px);z-index:var(--z-ui);display:flex;justify-content:center;gap:.5rem;padding-inline:var(--gutter) var(--gutter-r)}
+.seg{display:inline-flex;border:1px solid var(--rule-dark);border-radius:999px;padding:3px;background:rgba(40,40,40,.18)}
+.seg button{min-height:40px;min-width:76px;padding:0 1em;border:0;border-radius:999px;background:transparent;color:var(--milk);font-size:12px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background-color .3s,color .3s}
+.seg button[aria-pressed="true"]{background:var(--milk);color:var(--olive)}
+.reset{min-height:46px;padding:0 1.1em;border:1px solid var(--rule-dark);border-radius:999px;background:rgba(40,40,40,.18);color:var(--milk);font-size:12px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+.reset:hover,.seg button:hover:not([aria-pressed="true"]){background:rgba(240,236,227,.14)}
+
+/* hotspots */
+.hots{position:absolute;inset:0;z-index:var(--z-hot);pointer-events:none}
+.hot{position:absolute;left:0;top:0;width:44px;height:44px;margin:-22px 0 0 -22px;border:0;padding:0;background:transparent;cursor:pointer;pointer-events:auto;display:grid;place-items:center;transition:opacity .25s}
+.hot.away{opacity:0;pointer-events:none}
+.hot i{position:relative;width:14px;height:14px;border-radius:50%;background:var(--olive);box-shadow:0 0 0 2px var(--milk),0 2px 8px rgba(40,40,40,.35);transition:transform .35s cubic-bezier(.22,1,.36,1),background-color .3s}
+.hot i::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:1.5px solid var(--pastel);opacity:0;animation:ping 2.4s cubic-bezier(.22,1,.36,1) infinite}
+.hot:hover i,.hot:focus-visible i{transform:scale(1.35)}
+.hot.on i{background:var(--sand);transform:scale(1.5)}
+.hot .tip{position:absolute;left:50%;bottom:calc(100% - 4px);transform:translate(-50%,4px);white-space:nowrap;font-size:12px;letter-spacing:.06em;padding:.35em .7em;border-radius:999px;background:var(--charcoal);color:var(--milk);opacity:0;pointer-events:none;transition:opacity .2s,transform .3s cubic-bezier(.22,1,.36,1)}
+.hot:hover .tip,.hot:focus-visible .tip{opacity:1;transform:translate(-50%,0)}
+@keyframes ping{0%{opacity:.9;transform:scale(.6)}80%,100%{opacity:0;transform:scale(1.6)}}
+.nogl{position:absolute;inset:auto var(--gutter) 50% var(--gutter);text-align:center;font-size:16px;color:var(--milk)}
+
+/* panel */
+.panel{padding:clamp(24px,4vw,56px) var(--gutter-r) clamp(48px,6vw,80px) var(--gutter);min-width:0;display:flex;flex-direction:column;gap:clamp(24px,3vw,36px)}
+.panel .lede h2{font-size:clamp(1.8rem,3vw,2.6rem);letter-spacing:-.03em;line-height:1.05}
+.panel .lede p{margin-top:.8rem;font-size:17px;color:var(--olive);max-width:52ch}
+.note{font-size:14px;line-height:1.5;color:var(--olive);padding:.9rem 1rem;border:1px solid var(--rule);border-radius:2px;max-width:60ch}
+.note b{font-weight:500;color:var(--charcoal)}
+.chips-wrap h3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--olive);font-weight:400;margin-bottom:.8rem}
+.chips{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:.5rem}
+.chip{min-height:44px;padding:0 1.05em;border:1px solid var(--rule);border-radius:999px;background:transparent;font-size:15px;cursor:pointer;transition:background-color .25s,color .25s,border-color .25s}
+.chip:hover{border-color:var(--olive)}
+.chip[aria-pressed="true"]{background:var(--olive);color:var(--milk);border-color:var(--olive)}
+
+.area{display:flex;flex-direction:column;gap:clamp(20px,2.4vw,28px);scroll-margin-top:calc(var(--nav-h) + 12px)}
+.area-head{display:flex;flex-direction:column;gap:.6rem;border-top:1px solid var(--rule);padding-top:clamp(20px,2.4vw,28px)}
+.area-head .side{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--olive)}
+.area-head h2{font-size:clamp(2.4rem,5vw,4.4rem);line-height:.92;letter-spacing:-.04em;text-transform:uppercase}
+.area-head h2 em{text-transform:none}
+.area-head p{font-size:17px;color:var(--olive);max-width:52ch}
+.ex{list-style:none;margin:0;padding:0;counter-reset:ex;border-top:1px solid var(--rule)}
+.ex li{counter-increment:ex;display:grid;grid-template-columns:2.4rem minmax(0,1fr);gap:.2rem 1rem;padding:1.1rem 0;border-bottom:1px solid var(--rule)}
+.ex li::before{content:counter(ex,decimal-leading-zero);grid-row:1 / span 3;font-size:13px;letter-spacing:.06em;color:var(--olive);padding-top:.35em;font-variant-numeric:tabular-nums}
+.ex .row{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:.4rem 1rem}
+.ex h4{margin:0;font-size:clamp(1.15rem,1.6vw,1.35rem);font-weight:500;letter-spacing:-.015em}
+.ex .dose{font-size:13px;letter-spacing:.02em;padding:.3em .75em;border-radius:999px;background:var(--pastel);color:var(--olive);white-space:nowrap;font-variant-numeric:tabular-nums}
+.ex p{font-size:15.5px;color:var(--charcoal);max-width:60ch;opacity:.86}
+.ex-anim{position:relative;aspect-ratio:16/9;width:100%;max-width:460px;margin:.55rem 0 .35rem;background:color-mix(in srgb,var(--milk) 82%,var(--sand));border-radius:2px;overflow:hidden}
+.ex-anim svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.ex-cue{position:absolute;left:10px;top:8px;max-width:calc(100% - 20px);font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:.32em .75em;border-radius:999px;background:var(--olive);color:var(--milk);line-height:1.3}
+.flags{background:var(--charcoal);color:var(--milk);padding:clamp(18px,2.4vw,28px);border-radius:2px}
+.flags h3{font-size:clamp(1.15rem,1.6vw,1.35rem);letter-spacing:-.015em;margin-bottom:.7rem}
+.flags ul{margin:0;padding-left:1.1em;display:grid;gap:.35rem;font-size:15px;color:rgba(240,236,227,.9)}
+.hub{display:grid;gap:1rem;background:var(--olive);color:var(--milk);padding:clamp(20px,2.6vw,32px);border-radius:2px}
+.hub h3{font-size:clamp(1.3rem,2vw,1.7rem);letter-spacing:-.02em;line-height:1.15}
+.hub h3 em{font-size:1.08em}
+.hub p{font-size:15.5px;color:rgba(240,236,227,.9);max-width:52ch}
+.hub ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:.45rem}
+.hub li{font-size:13px;padding:.35em .8em;border-radius:999px;border:1px solid var(--rule-dark)}
+.hub .btn{justify-self:start}
+
+footer{border-top:1px solid var(--rule);padding:1.4rem var(--gutter-r) 1.6rem var(--gutter);display:flex;flex-wrap:wrap;justify-content:space-between;gap:.6rem 2rem;font-size:12px;letter-spacing:.06em;color:var(--olive)}
+
+@media (max-width:900px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .stage{position:relative;top:auto;height:min(72svh,640px);min-height:440px}
+  .stage h1{font-size:clamp(1.7rem,7.4vw,2.4rem)}
+  .stage .hint{top:calc(16px + clamp(1.7rem,7.4vw,2.4rem) + 12px)}
+}
+@media (prefers-reduced-motion:reduce){
+  .hot i::after{animation:none}
+  .hot i,.btn svg,.hot .tip{transition:none}
+}
+</style>
+</head>
+<body>
+<nav class="nav" aria-label="Main">
+  <a class="logo" href="index.html" aria-label="Sportive Hub, Movement Lab, home"><span class="logo-img"></span></a>
+  <div class="links">
+    <a class="home" href="index.html">Back to Sportive Hub</a>
+    <a class="btn fill" id="navBook" href="https://wa.me/201035555380?text=Hi%20Sportive%20Hub%2C%20I%27d%20like%20to%20book%20an%20assessment." target="_blank" rel="noopener"><span>Book <span class="long">an assessment</span></span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+  </div>
+</nav>
+
+<main class="app">
+  <section class="stage" id="stage" aria-label="3D body. Drag to turn it, tap where it hurts.">
+    <div class="title"><h1>Where does it <em>hurt?</em></h1></div>
+    <canvas id="gl" aria-hidden="true"></canvas>
+    <div class="hots" id="hots" aria-hidden="true"></div>
+    <p class="hint" id="hint">Drag to turn · Tap where it hurts</p>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="View">
+        <button type="button" id="vFront" aria-pressed="true">Front</button>
+        <button type="button" id="vBack" aria-pressed="false">Back</button>
+      </div>
+      <button type="button" class="reset" id="vReset" hidden>Whole body</button>
+    </div>
+    <p class="nogl" id="nogl" hidden>The 3D body can't load on this device. Choose an area from the list instead.</p>
+  </section>
+
+  <section class="panel" aria-label="Exercises">
+    <div class="lede" id="lede">
+      <h2>Tap the spot on the body, or pick an area below.</h2>
+      <p>You'll get the gentle home exercises our physiotherapists usually start people on, with how many to do and when to stop.</p>
+    </div>
+    <p class="note"><b>For everyday aches and stiffness.</b> These are general exercises, not a diagnosis. Move within a comfortable range and stop if the pain sharpens. Recent injury, surgery or pregnancy? Check with a physiotherapist first.</p>
+    <div class="chips-wrap">
+      <h3 id="chipsLabel">Areas</h3>
+      <ul class="chips" id="chips" aria-labelledby="chipsLabel"></ul>
+    </div>
+    <div class="area" id="area" hidden aria-live="polite"></div>
+  </section>
+</main>
+
+<footer>
+  <span>© 2026 Sportive Hub · Movement Lab · SODIC Medical District, Sheikh Zayed</span>
+  <span>General guidance only. Not a substitute for an assessment.</span>
+</footer>
+
+<script src="assets/exercises.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  /* ---------------- Content ---------------- */
+  var FLAGS = ['The pain is sharp, or worse after the exercises and still worse the next day','Numbness, tingling, pins and needles or weakness','Pain that wakes you at night, or started after a fall or accident','Swelling, redness, heat or a fever'];
+  var R = {
+    'neck': { name:'Neck', why:'Usually desk posture, long phone sessions, stress, or sleeping at an awkward angle.',
+      ex:[
+        ['Chin tucks','10 reps, hold 3 s','Sit tall. Glide your chin straight back as if making a double chin, without tipping your head down. Hold, then relax.'],
+        ['Side neck stretch','3 × 20–30 s each side','Sit on one hand. Tilt your ear toward the opposite shoulder until you feel a stretch along the side of your neck. Breathe slowly.'],
+        ['Shoulder blade squeezes','2 × 10, hold 3 s','Arms relaxed. Draw your shoulder blades back and down toward your back pockets, without shrugging.'],
+        ['Slow neck turns','5 each way','Turn your head to look over one shoulder as far as is comfortable, then the other. Smooth and unforced.']],
+      flags:['Dizziness, or pain travelling down an arm'], hub:['Physiotherapy','Cupping'] },
+    'shoulder': { name:'Shoulder', why:'Often overhead work or sport, sleeping on one side, carrying a child, or a stiff upper back.',
+      ex:[
+        ['Pendulum swings','30–60 s, 2–3 times a day','Lean on a table with your good hand. Let the sore arm hang and draw small circles by swaying your body, not by lifting the arm.'],
+        ['Wall finger walk','5–10 reps','Face a wall. Walk your fingers up it as high as is comfortable, hold 5 s, then walk them back down.'],
+        ['Doorway outward press','5 × 10 s holds','Elbow bent at 90° by your side. Press the back of your hand into a door frame at about half effort. Hold, then relax.'],
+        ['Cross-body stretch','3 × 20–30 s','Bring the arm across your chest and gently hug it closer with the other arm. Keep the shoulder down.']],
+      flags:['You cannot lift the arm at all after a fall'], hub:['Physiotherapy','EMS training'] },
+    'upper-back': { name:'Upper back', why:'Long hours sitting or driving, carrying bags or a baby, and shallow breathing under stress.',
+      ex:[
+        ['Chair back extension','8–10 reps','Sit in a chair whose backrest reaches your shoulder blades. Hands behind your head, lean back over the edge, then return.'],
+        ['Open books','8 each side','Lie on your side, knees bent, arms straight in front. Open the top arm across to the other side, following it with your eyes. Return slowly.'],
+        ['Cat–cow','10 slow rounds','On hands and knees, round your back up toward the ceiling, then let it sink as you lift your chest. Move with your breath.'],
+        ['Doorway chest stretch','3 × 20–30 s','Forearms on a door frame at shoulder height. Step one foot through until you feel a stretch across the chest.']],
+      flags:['Chest pain, or pain with shortness of breath: seek urgent care'], hub:['Physiotherapy','Cupping'] },
+    'lower-back': { name:'Lower back', why:'Most often long sitting, lifting, weak hips and core, or poor sleep. Gentle movement usually helps more than rest.',
+      ex:[
+        ['Knee to chest','3 × 20 s each side','Lie on your back. Hug one knee toward your chest while the other foot stays on the floor.'],
+        ['Pelvic tilts','2 × 10','On your back, knees bent. Gently flatten your lower back into the floor by tightening your stomach, then release.'],
+        ['Glute bridge','2 × 10, hold 2 s','Knees bent, feet flat. Squeeze your glutes and lift your hips until you form a line from knees to shoulders.'],
+        ['Bird dog','2 × 8 each side','On hands and knees, reach one arm forward and the opposite leg back, keeping your hips level. Return slowly.'],
+        ["Child's pose",'2 × 30 s','Kneel, sit back toward your heels and reach your arms forward along the floor. Breathe into your lower back.']],
+      flags:['Pain spreading below the knee','Any change in bladder or bowel control, or numbness around the groin: seek urgent care'], hub:['Physiotherapy','Cupping','EMS training'] },
+    'core': { name:'Core & pelvic floor', short:'Core', why:'After pregnancy, abdominal surgery or a long break from exercise, the deep core often needs waking up gently before anything harder.',
+      ex:[
+        ['Belly breathing','5 minutes','On your back, knees bent, one hand on your belly. Breathe in through your nose so your belly rises, then out slowly through your mouth.'],
+        ['Pelvic floor squeezes','10 × 5 s, 3 times a day','Gently squeeze and lift as if stopping the flow of urine. Hold, then fully relax. Keep breathing and keep your glutes soft.'],
+        ['Heel slides','2 × 10 each side','On your back, knees bent. Breathe out, draw your belly gently in, and slide one heel away along the floor, then back.'],
+        ['Dead bug, feet down','2 × 6 each side','On your back, knees and hips bent to 90°. Lower one foot to tap the floor while your lower back stays still. Return and switch.']],
+      flags:['Within 6 weeks of giving birth or surgery: get cleared first','A bulge along the middle of your tummy when you sit up, or heaviness in the pelvis'], hub:["Women's health physiotherapy",'Lymphatic drainage'] },
+    'elbow': { name:'Elbow', why:'Usually overuse: gripping, typing, racquet sports, lifting, or carrying a car seat.',
+      ex:[
+        ['Forearm top stretch','3 × 20–30 s','Arm straight in front, palm down. With the other hand, gently bend the wrist down until you feel a stretch on top of the forearm.'],
+        ['Forearm underside stretch','3 × 20–30 s','Arm straight, palm up. Gently pull your fingers back toward you.'],
+        ['Slow wrist lowers','3 × 10','Forearm on a table, palm down, holding a small water bottle. Lift the wrist using the other hand, then lower it slowly on its own.'],
+        ['Towel twist','3 × 10 each way','Hold a rolled towel in both hands and wring it as if squeezing out water, then twist the other way.']],
+      flags:[], hub:['Physiotherapy'] },
+    'wrist': { name:'Wrist & hand', short:'Wrist', why:'Typing and phone use, lifting a baby, gym grip work, or an old fall onto the hand.',
+      ex:[
+        ['Wrist circles','10 each direction','Rest your forearm on a table, hand over the edge. Draw slow circles with your hand, as large as is comfortable.'],
+        ['Tendon glides','5 rounds','Move slowly through five positions: fingers straight, hook fist, full fist, tabletop, straight fist.'],
+        ['Prayer stretch','3 × 20 s','Palms together at chest height. Slowly lower your hands toward your waist until you feel a stretch.'],
+        ['Towel squeeze','10 × 5 s','Squeeze a rolled towel or soft ball, hold, then let go fully.']],
+      flags:['Numb or tingling fingers, especially at night'], hub:['Physiotherapy'] },
+    'hip': { name:'Hip', why:'Long hours sitting, running, weak glutes, or sleeping on one side.',
+      ex:[
+        ['Clamshells','2 × 12 each side','Lie on your side, knees bent, feet together. Lift the top knee without letting your hips roll back.'],
+        ['Kneeling hip flexor stretch','2 × 30 s each side','Kneel on one knee with the other foot forward. Tuck your pelvis under and shift forward until the front of the hip stretches.'],
+        ['Figure-four stretch','2 × 30 s each side','On your back, cross one ankle over the opposite knee, then pull that thigh gently toward you.'],
+        ['Glute bridge','2 × 10, hold 2 s','Knees bent, feet flat. Squeeze your glutes and lift your hips until you form a line from knees to shoulders.']],
+      flags:['Groin pain that makes you limp'], hub:['Physiotherapy','EMS training'] },
+    'knee': { name:'Knee', why:'Running, stairs, an old injury, or thigh muscles that have lost strength.',
+      ex:[
+        ['Thigh squeezes','10 × 5 s','Sit with your leg straight. Tighten the thigh to press the back of the knee down, hold, release.'],
+        ['Straight leg raise','2 × 10','On your back, other knee bent. Tighten the thigh and lift the straight leg to the height of the bent knee. Lower slowly.'],
+        ['Heel slides','2 × 10','On your back, slide your heel toward you to bend the knee as far as is comfortable, then slide it back.'],
+        ['Sit to stand','2 × 8','From a firm chair, stand up without using your hands, then sit back down slowly. Use a higher seat if it hurts.']],
+      flags:['The knee locks, gives way, or swells quickly'], hub:['Physiotherapy','EMS training'] },
+    'ankle': { name:'Ankle & foot', short:'Ankle', why:'Old sprains, long walks, new shoes, or tight calves.',
+      ex:[
+        ['Ankle alphabet','1 round each foot','Sitting, trace the letters of the alphabet in the air with your big toe.'],
+        ['Calf raises','2 × 12','Hold a counter. Rise onto your toes, then lower over three slow seconds.'],
+        ['Wall calf stretch','2 × 30 s each side','Hands on a wall, one foot back with the heel down. Lean forward until you feel the calf stretch.'],
+        ['One-leg balance','3 × 30 s each side','Stand on one foot beside a counter. Make it harder by closing your eyes.'],
+        ['Towel scrunches','2 × 10','Seated, foot on a towel. Scrunch the towel toward you with your toes, then spread them.']],
+      flags:["You can't put weight on the foot after a twist or fall"], hub:['Physiotherapy','EMS training'] }
+  };
+  var ORDER = ['neck','shoulder','upper-back','lower-back','core','elbow','wrist','hip','knee','ankle'];
+
+  /* Hotspots in body space (metres, figure faces +z, its left side is +x). n = outward direction. */
+  var HOTS = [
+    {r:'neck', p:[0,1.55,-0.052], n:[0,0.1,-1]},
+    {r:'neck', p:[0,1.52,0.05], n:[0,0,1]},
+    {r:'shoulder', side:'Left', p:[0.205,1.43,0.0], n:[0.85,0.35,0.25]},
+    {r:'shoulder', side:'Right', p:[-0.205,1.43,0.0], n:[-0.85,0.35,0.25]},
+    {r:'upper-back', p:[0,1.32,-0.105], n:[0,0,-1]},
+    {r:'lower-back', p:[0,1.05,-0.085], n:[0,0,-1]},
+    {r:'core', p:[0,1.07,0.088], n:[0,0,1]},
+    {r:'elbow', side:'Left', p:[0.245,1.14,-0.045], n:[0.35,0,-1]},
+    {r:'elbow', side:'Right', p:[-0.245,1.14,-0.045], n:[-0.35,0,-1]},
+    {r:'wrist', side:'Left', p:[0.275,0.885,0.04], n:[0.3,0,1]},
+    {r:'wrist', side:'Right', p:[-0.275,0.885,0.04], n:[-0.3,0,1]},
+    {r:'hip', side:'Left', p:[0.165,0.93,0.0], n:[1,0,0.15]},
+    {r:'hip', side:'Right', p:[-0.165,0.93,0.0], n:[-1,0,0.15]},
+    {r:'knee', side:'Left', p:[0.1,0.5,0.058], n:[0,0,1]},
+    {r:'knee', side:'Right', p:[-0.1,0.5,0.058], n:[0,0,1]},
+    {r:'ankle', side:'Left', p:[0.135,0.085,0.0], n:[1,0,0.3]},
+    {r:'ankle', side:'Right', p:[-0.135,0.085,0.0], n:[-1,0,0.3]}
+  ];
+
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var chipsEl = document.getElementById('chips'), areaEl = document.getElementById('area'), ledeEl = document.getElementById('lede');
+  var hint = document.getElementById('hint'), resetBtn = document.getElementById('vReset');
+  var vFront = document.getElementById('vFront'), vBack = document.getElementById('vBack');
+  var navBook = document.getElementById('navBook');
+  var current = null;
+  var hl = function(){};
+
+  function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function waLink(text){ return 'https://wa.me/201035555380?text=' + encodeURIComponent(text); }
+
+  ORDER.forEach(function(id){
+    var li = document.createElement('li');
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = R[id].name; b.setAttribute('aria-pressed','false'); b.dataset.r = id;
+    b.addEventListener('click', function(){ select(id, null, 'chip'); });
+    li.appendChild(b); chipsEl.appendChild(li);
+  });
+
+  function render(id, side){
+    var d = R[id];
+    var where = (side ? side.toLowerCase() + ' ' : '') + d.name.toLowerCase();
+    var flags = d.flags.concat(FLAGS);
+    areaEl.innerHTML =
+      '<div class="area-head">' + (side ? '<span class="side">' + esc(side) + ' side</span>' : '') +
+        '<h2>' + esc(d.name) + '</h2><p>' + esc(d.why) + '</p></div>' +
+      '<ol class="ex">' + d.ex.map(function(e){
+        var anim = (window.SHAnim && SHAnim.has(e[0])) ? '<div class="ex-anim" data-anim="' + esc(e[0]) + '"></div>' : '';
+        return '<li><div class="row"><h4>' + esc(e[0]) + '</h4><span class="dose">' + esc(e[1]) + '</span></div>' + anim + '<p>' + esc(e[2]) + '</p></li>';
+      }).join('') + '</ol>' +
+      '<p class="note"><b>Once or twice a day, most days.</b> Mild discomfort that settles within an hour is fine. Give it two weeks; if it isn\'t easing, it needs a proper look.</p>' +
+      '<div class="flags"><h3>Stop and get it checked if</h3><ul>' + flags.map(function(f){ return '<li>' + esc(f) + '</li>'; }).join('') + '</ul></div>' +
+      '<div class="hub"><h3>Still sore after <em>two</em> weeks?</h3><p>A physiotherapist at Sportive Hub will find what\'s driving your ' + esc(where) + ' pain and build the plan from there.</p>' +
+        '<ul>' + d.hub.map(function(h){ return '<li>' + esc(h) + '</li>'; }).join('') + '</ul>' +
+        '<a class="btn milk" target="_blank" rel="noopener" href="' + waLink('Hi Sportive Hub, I have pain in my ' + where + ' and I\'d like to book an assessment.') + '">Book a ' + esc((d.short || d.name).toLowerCase()) + ' assessment <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></div>';
+    navBook.href = waLink('Hi Sportive Hub, I have pain in my ' + where + ' and I\'d like to book an assessment.');
+    if (window.SHAnim) SHAnim.mountAll(areaEl);
+  }
+
+  function select(id, hotIndex, source){
+    if (!R[id]) return;
+    if (hotIndex == null) hotIndex = bestHotFor(id);
+    var h = HOTS[hotIndex];
+    current = { r: id, i: hotIndex };
+    chipsEl.querySelectorAll('.chip').forEach(function(c){ c.setAttribute('aria-pressed', String(c.dataset.r === id)); });
+    hotEls.forEach(function(el, i){ el.classList.toggle('on', i === hotIndex); });
+    ledeEl.hidden = true; areaEl.hidden = false;
+    render(id, h && h.side);
+    try { history.replaceState(null, '', '#' + id); } catch (e) {}
+    focusHot(hotIndex);
+    resetBtn.hidden = false;
+    hint.classList.add('gone');
+    stage.classList.add('focused');
+    hl(id);
+    if (source === 'body' && window.matchMedia('(max-width: 900px)').matches) {
+      setTimeout(function(){ areaEl.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); }, 650);
+    }
+  }
+
+  /* ---------------- 3D ---------------- */
+  var stage = document.getElementById('stage'), canvas = document.getElementById('gl'), hotsLayer = document.getElementById('hots');
+  var hotEls = [];
+  var gl = null;
+  try { if (window.THREE) gl = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true }); } catch (e) { gl = null; }
+
+  if (!gl) {
+    document.getElementById('nogl').hidden = false; hint.hidden = true;
+    document.querySelector('.controls').hidden = true;
+    var focusHot = function(){}; var bestHotFor = function(id){ return HOTS.findIndex(function(h){ return h.r === id; }); };
+    boot(); return;
+  }
+
+  var V3 = THREE.Vector3;
+  function lin(hex){ return new THREE.Color(hex).convertSRGBToLinear(); }
+  gl.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  gl.outputEncoding = THREE.sRGBEncoding;
+  gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = 1.15;
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(28, 1, 0.1, 50);
+  var body = new THREE.Group(); scene.add(body);
+
+  /* ---------- Écorché figure: a dark body, muscles layered on top, bone and tendon in milk ---------- */
+  var baseMat = new THREE.MeshStandardMaterial({ color: lin('#282828').lerp(lin('#BAA48D'), 0.32), roughness: 0.8, metalness: 0 });
+  var skinMat = new THREE.MeshStandardMaterial({ color: lin('#BAA48D').multiplyScalar(0.82), roughness: 0.55, metalness: 0 });
+  var boneMat = new THREE.MeshStandardMaterial({ color: lin('#F0ECE3'), roughness: 0.5, metalness: 0 });
+  var parts = [];
+  function add(mesh){ body.add(mesh); parts.push(mesh); return mesh; }
+  function ball(p, r, sc, mat){ var m = add(new THREE.Mesh(new THREE.SphereGeometry(r, 32, 24), mat || baseMat)); m.position.set(p[0], p[1], p[2]); if (sc) m.scale.set(sc[0], sc[1], sc[2]); return m; }
+  function limb(a, b, r1, r2, caps, mat){
+    var va = new V3(a[0], a[1], a[2]), vb = new V3(b[0], b[1], b[2]);
+    var m = add(new THREE.Mesh(new THREE.CylinderGeometry(r2, r1, va.distanceTo(vb), 32, 1, true), mat || baseMat));
+    m.position.copy(va).lerp(vb, 0.5);
+    m.quaternion.setFromUnitVectors(new V3(0, 1, 0), vb.clone().sub(va).normalize());
+    if (caps !== false) { ball(a, r1, null, mat); ball(b, r2, null, mat); }
+    return m;
+  }
+
+  /* base body, slightly slimmer than the muscle layer so the gaps read as depth */
+  var prof = [[0.0,0.83],[0.11,0.845],[0.152,0.89],[0.16,0.95],[0.15,1.01],[0.13,1.08],[0.126,1.13],[0.138,1.2],[0.156,1.28],[0.166,1.35],[0.162,1.405],[0.136,1.445],[0.082,1.47],[0.0,1.478]];
+  var curve = new THREE.SplineCurve(prof.map(function(q){ return new THREE.Vector2(q[0], q[1]); }));
+  var pts = curve.getPoints(60); pts[0].x = 0; pts[pts.length - 1].x = 0;
+  var torso = add(new THREE.Mesh(new THREE.LatheGeometry(pts, 64), baseMat));
+  torso.scale.set(1, 1, 0.6);
+  limb([0,1.43,0],[0,1.575,0.006], 0.043, 0.04, false);
+  ball([0,1.672,0.012], 0.1, [0.86,1.1,0.98], skinMat);
+  [1, -1].forEach(function(s){
+    ball([s*0.17,1.418,0], 0.05, [1,0.9,0.95]);
+    limb([s*0.19,1.415,0],[s*0.236,1.14,-0.022], 0.04, 0.03);
+    limb([s*0.236,1.14,-0.022],[s*0.272,0.895,0.014], 0.03, 0.022);
+    var hand = ball([s*0.284,0.825,0.02], 0.04, [0.5,1.3,0.95], skinMat); hand.rotation.z = s * 0.06;
+    limb([s*0.092,0.9,0],[s*0.1,0.5,0.012], 0.07, 0.044);
+    limb([s*0.1,0.5,0.012],[s*0.102,0.095,-0.006], 0.044, 0.028);
+    limb([s*0.102,0.055,-0.03],[s*0.11,0.03,0.15], 0.036, 0.028, true, skinMat);
+  });
+
+  /* muscle fibres: a fine striped bump map running along each muscle */
+  var fiberTex = (function(){
+    var c = document.createElement('canvas'); c.width = 512; c.height = 64; var g = c.getContext('2d');
+    g.fillStyle = '#808080'; g.fillRect(0, 0, 512, 64);
+    for (var x = 0; x < 512; x += 1 + (Math.random() * 2 | 0)) { var v = 112 + (Math.random() * 36 | 0); g.fillStyle = 'rgb(' + v + ',' + v + ',' + v + ')'; g.fillRect(x, 0, 1, 64); }
+    var t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(2, 1); return t;
+  })();
+  var MUSCLE = lin('#BAA48D'), HILITE = lin('#F0ECE3'), GLOWC = lin('#BAA48D'), DIM = 0.55;
+  var muscleMeshes = [];
+  var geoCache = {};
+  function spindleGeo(pw, skew){
+    var key = pw + '_' + skew; if (geoCache[key]) return geoCache[key];
+    var p2 = [];
+    for (var i = 0; i <= 28; i++) { var t = i / 28, tt = Math.pow(t, skew); p2.push(new THREE.Vector2(Math.max(0.0001, Math.pow(Math.sin(Math.PI * tt), pw)), t - 0.5)); }
+    return (geoCache[key] = new THREE.LatheGeometry(p2, 32));
+  }
+  function muscle(a, b, w, d, face, region, opt){
+    opt = opt || {};
+    var va = new V3(a[0], a[1], a[2]), vb = new V3(b[0], b[1], b[2]);
+    var y = vb.clone().sub(va), len = y.length(); y.normalize();
+    var f = new V3(face[0], face[1], face[2]).normalize();
+    var z = f.clone().sub(y.clone().multiplyScalar(f.dot(y))).normalize();
+    var x = new V3().crossVectors(y, z).normalize();
+    var mat = opt.bone ? boneMat : new THREE.MeshStandardMaterial({ color: MUSCLE.clone().multiplyScalar(0.9 + Math.random() * 0.16), roughness: 0.48, metalness: 0, bumpMap: fiberTex, bumpScale: 0.12, emissive: GLOWC.clone(), emissiveIntensity: 0 });
+    var m = add(new THREE.Mesh(spindleGeo(opt.p || 0.7, opt.skew || 1), mat));
+    m.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z));
+    if (!opt.bone) { w *= 1.38; d *= 1.3; len *= 1.06; }
+    m.scale.set(w, len, d);
+    m.position.copy(va).lerp(vb, 0.5);
+    if (!opt.bone) { mat.userData.base = mat.color.clone(); mat.userData.k = 0; mat.userData.target = 0; m.userData.region = region; muscleMeshes.push(m); }
+    return m;
+  }
+  /* left side of the figure (+x); every entry is mirrored to the right */
+  var MUS = [
+    ['neck',[0.035,1.61,0.0],[0.014,1.455,0.058],.016,.015,[0.3,0,1]],
+    ['neck',[0.025,1.585,-0.035],[0.155,1.445,-0.03],.042,.02,[0.15,0.6,-0.8],{skew:0.8}],
+    ['shoulder',[0.168,1.462,0.012],[0.226,1.29,0.0],.058,.044,[1,0.25,0.1],{skew:0.85}],
+    ['shoulder',[0.07,1.375,-0.104],[0.16,1.33,-0.072],.05,.016,[0.2,0.1,-1]],
+    ['shoulder',[0.13,1.275,-0.082],[0.19,1.335,-0.035],.024,.02,[0.4,0,-1]],
+    ['shoulder',[0.03,1.395,0.1],[0.165,1.405,0.055],.036,.02,[0.25,0.3,1]],
+    ['shoulder',[0.03,1.315,0.104],[0.16,1.375,0.058],.055,.026,[0.25,-0.1,1]],
+    ['core',[0.03,1.265,0.094],[0.03,1.21,0.092],.027,.013,[0,0,1]],
+    ['core',[0.03,1.2,0.088],[0.03,1.145,0.084],.027,.013,[0,0,1]],
+    ['core',[0.03,1.135,0.082],[0.03,1.08,0.083],.027,.013,[0,0,1]],
+    ['core',[0.028,1.07,0.086],[0.022,0.9,0.096],.025,.013,[0,0,1]],
+    ['core',[0.108,1.2,0.066],[0.122,0.98,0.068],.04,.02,[0.6,0,0.8]],
+    ['core',[0.13,1.29,0.05],[0.112,1.2,0.066],.022,.012,[0.7,0,0.7]],
+    ['core',[0.136,1.25,0.044],[0.116,1.17,0.064],.02,.012,[0.7,0,0.7]],
+    ['upper-back',[0.02,1.43,-0.096],[0.14,1.39,-0.078],.045,.018,[0,0.2,-1]],
+    ['upper-back',[0.015,1.2,-0.084],[0.1,1.36,-0.1],.035,.016,[0,0,-1]],
+    ['upper-back',[0.03,1.15,-0.084],[0.03,1.4,-0.1],.024,.02,[0,0,-1]],
+    ['lower-back',[0.032,0.93,-0.096],[0.032,1.16,-0.084],.03,.024,[0,0,-1]],
+    ['lower-back',[0.05,1.06,-0.08],[0.155,1.3,-0.048],.07,.02,[0.4,0,-1],{skew:0.8}],
+    ['elbow',[0.205,1.36,0.028],[0.236,1.17,0.004],.03,.028,[0,0,1],{skew:1.1}],
+    ['elbow',[0.2,1.37,-0.04],[0.232,1.17,-0.054],.034,.028,[0.2,0,-1]],
+    ['elbow',[0.245,1.2,0.0],[0.27,0.98,0.022],.022,.02,[1,0,0.3]],
+    ['wrist',[0.236,1.12,0.01],[0.272,0.93,0.028],.028,.02,[-0.3,0,1],{skew:0.8}],
+    ['wrist',[0.255,1.12,-0.03],[0.282,0.93,-0.006],.028,.02,[0.5,0,-1],{skew:0.8}],
+    ['hip',[0.04,0.99,-0.096],[0.14,0.82,-0.062],.085,.05,[0.3,0,-1]],
+    ['hip',[0.11,1.0,-0.052],[0.162,0.9,-0.014],.05,.03,[1,0.2,-0.5]],
+    ['knee',[0.1,0.86,0.062],[0.102,0.56,0.054],.042,.036,[0,0,1]],
+    ['knee',[0.142,0.84,0.012],[0.124,0.55,0.02],.047,.036,[1,0,0.3]],
+    ['knee',[0.066,0.7,0.04],[0.088,0.54,0.046],.042,.034,[-0.6,0,0.8],{skew:1.4}],
+    ['hip',[0.14,0.885,0.058],[0.07,0.53,0.02],.016,.012,[0,0,1]],
+    ['hip',[0.042,0.86,0.018],[0.08,0.62,0.006],.04,.034,[-1,0,0.2],{skew:0.8}],
+    ['knee',[0.118,0.85,-0.046],[0.122,0.55,-0.04],.04,.034,[0.3,0,-1]],
+    ['knee',[0.068,0.85,-0.05],[0.08,0.55,-0.042],.038,.034,[-0.3,0,-1]],
+    ['ankle',[0.085,0.48,-0.04],[0.095,0.27,-0.046],.036,.038,[-0.4,0,-1],{skew:0.8}],
+    ['ankle',[0.12,0.48,-0.034],[0.11,0.3,-0.04],.03,.032,[0.4,0,-1],{skew:0.8}],
+    ['ankle',[0.1,0.34,-0.033],[0.1,0.15,-0.028],.036,.02,[0,0,-1]],
+    ['ankle',[0.116,0.46,0.033],[0.104,0.15,0.028],.022,.02,[0.4,0,1],{skew:0.7}],
+    ['ankle',[0.132,0.45,0.0],[0.118,0.16,0.0],.02,.018,[1,0,0.1],{skew:0.8}],
+    ['core',[0.142,1.12,0.02],[0.15,0.97,0.02],.03,.018,[1,0,0.2]],
+    ['wrist',[0.228,1.1,-0.01],[0.262,0.94,0.0],.02,.016,[-1,0,0]]
+  ];
+  [1, -1].forEach(function(s){
+    MUS.forEach(function(m){
+      muscle([s*m[1][0], m[1][1], m[1][2]], [s*m[2][0], m[2][1], m[2][2]], m[3], m[4], [s*m[5][0], m[5][1], m[5][2]], m[0], m[6]);
+    });
+    /* bone and tendon landmarks */
+    muscle([s*0.015,1.448,0.07],[s*0.17,1.458,0.02],.012,.012,[0,1,0],null,{bone:true});
+    muscle([s*0.1,0.2,-0.04],[s*0.1,0.07,-0.044],.011,.009,[0,0,-1],null,{bone:true});
+    muscle([s*0.1,0.55,0.05],[s*0.1,0.47,0.056],.026,.014,[0,0,1],null,{bone:true});
+    ball([s*0.236,1.14,-0.05], 0.019, null, boneMat);
+  });
+
+  /* light up the muscles of the chosen area, dim the rest */
+  hl = function(region){
+    muscleMeshes.forEach(function(m){ m.material.userData.target = region ? (m.userData.region === region ? 1 : -1) : 0; });
+  };
+  function updateMuscles(k, now){
+    var pulse = reduce ? 0.35 : 0.28 + Math.sin(now / 380) * 0.12;
+    for (var i = 0; i < muscleMeshes.length; i++) {
+      var mat = muscleMeshes[i].material, u = mat.userData;
+      u.k += (u.target - u.k) * k;
+      if (u.k >= 0) { mat.color.copy(u.base).lerp(HILITE, u.k * 0.45); mat.emissiveIntensity = u.k * pulse; }
+      else { mat.color.copy(u.base).multiplyScalar(1 + u.k * (1 - DIM)); mat.emissiveIntensity = 0; }
+    }
+  }
+
+  /* soft floor shadow */
+  function radialTex(inner, outer){
+    var c = document.createElement('canvas'); c.width = c.height = 128;
+    var g = c.getContext('2d'), gr = g.createRadialGradient(64,64,0,64,64,64);
+    gr.addColorStop(0, inner); gr.addColorStop(1, outer); g.fillStyle = gr; g.fillRect(0,0,128,128);
+    var t = new THREE.CanvasTexture(c); return t;
+  }
+  var shadow = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.5), new THREE.MeshBasicMaterial({ map: radialTex('rgba(40,40,40,0.45)','rgba(40,40,40,0)'), transparent: true, depthWrite: false }));
+  shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.001; scene.add(shadow);
+
+  /* where-it-hurts glow, parked on the selected hotspot */
+  var glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: radialTex('rgba(186,164,141,0.95)','rgba(186,164,141,0)'), transparent: true, depthWrite: false }));
+  glow.scale.set(0.2, 0.2, 1); glow.visible = false; body.add(glow);
+
+  /* light: milk sky, olive bounce, a warm sand rim from behind */
+  scene.add(new THREE.HemisphereLight(lin('#FFFFFF'), lin('#595641'), 0.75));
+  var key = new THREE.DirectionalLight(lin('#FFFFFF'), 0.95); key.position.set(1.6, 2.6, 3); scene.add(key);
+  var fill = new THREE.DirectionalLight(lin('#F0ECE3'), 0.3); fill.position.set(-2.2, 1.2, 2); scene.add(fill);
+  var rim = new THREE.DirectionalLight(lin('#BAA48D'), 1.1); rim.position.set(-1.8, 2, -2.6); scene.add(rim);
+  var rim2 = new THREE.DirectionalLight(lin('#C9D6B8'), 0.5); rim2.position.set(2, 1, -2.4); scene.add(rim2);
+
+  /* hotspot buttons, projected from 3D each frame */
+  HOTS.forEach(function(h, i){
+    h.pv = new V3(h.p[0], h.p[1], h.p[2]); h.nv = new V3(h.n[0], h.n[1], h.n[2]).normalize();
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'hot'; b.tabIndex = -1;
+    var label = (h.side ? h.side + ' ' : '') + R[h.r].name.toLowerCase();
+    b.innerHTML = '<i></i><span class="tip">' + esc(label.charAt(0).toUpperCase() + label.slice(1)) + '</span>';
+    b.addEventListener('click', function(e){ e.stopPropagation(); select(h.r, i, 'body'); });
+    hotsLayer.appendChild(b); hotEls.push(b);
+  });
+
+  /* view state, eased every frame */
+  var BASE = { y: 0.86, dist: 4.4, look: 0.8 };
+  var view = { angle: reduce ? 0 : -0.9, dist: BASE.dist, camY: BASE.y, look: BASE.look, fresh: true };
+  var target = { angle: 0, dist: BASE.dist, camY: BASE.y, look: BASE.look };
+  var size = { w: 1, h: 1 };
+
+  function resize(){
+    var r = stage.getBoundingClientRect(); size.w = Math.max(1, r.width); size.h = Math.max(1, r.height);
+    gl.setSize(size.w, size.h, false); camera.aspect = size.w / size.h;
+    /* keep the whole figure in frame on narrow screens */
+    var fitH = 2.6 / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
+    var fitW = 1.0 / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect);
+    BASE.dist = Math.max(fitH, fitW);
+    if (!current) { target.dist = BASE.dist; if (view.fresh) { view.dist = BASE.dist; view.fresh = false; } }
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize); resize();
+
+  function nearestAngle(a){ var c = view.angle; while (a - c > Math.PI) a -= Math.PI * 2; while (a - c < -Math.PI) a += Math.PI * 2; return a; }
+  function setFacing(angle){ target.angle = nearestAngle(angle); }
+
+  var focusHot = function(i){
+    var h = HOTS[i]; if (!h) return;
+    setFacing(Math.atan2(-h.nv.x, h.nv.z));
+    var close = Math.max(BASE.dist * 0.55, 2.3);
+    target.dist = close; target.look = h.pv.y; target.camY = h.pv.y + 0.04;
+    glow.position.copy(h.pv).addScaledVector(h.nv, 0.035); glow.visible = true;
+  };
+  var bestHotFor = function(id){
+    var best = -1, bestScore = -Infinity;
+    HOTS.forEach(function(h, i){
+      if (h.r !== id) return;
+      var n = h.nv.clone().applyAxisAngle(new V3(0,1,0), view.angle);
+      var score = n.z + (h.side === 'Left' ? 0.001 : 0);
+      if (score > bestScore) { bestScore = score; best = i; }
+    });
+    return best;
+  };
+
+  function resetView(){
+    current = null; glow.visible = false; hl(null);
+    target.dist = BASE.dist; target.look = BASE.look; target.camY = BASE.y;
+    hotEls.forEach(function(el){ el.classList.remove('on'); });
+    chipsEl.querySelectorAll('.chip').forEach(function(c){ c.setAttribute('aria-pressed','false'); });
+    areaEl.hidden = true; ledeEl.hidden = false; resetBtn.hidden = true; stage.classList.remove('focused');
+    navBook.href = waLink("Hi Sportive Hub, I'd like to book an assessment.");
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+  }
+  resetBtn.addEventListener('click', resetView);
+  vFront.addEventListener('click', function(){ setFacing(0); });
+  vBack.addEventListener('click', function(){ setFacing(Math.PI); });
+
+  /* drag to turn; a tap (little movement) picks the nearest area on the side facing you */
+  var ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  var drag = null;
+  canvas.addEventListener('pointerdown', function(e){
+    drag = { x: e.clientX, y: e.clientY, start: target.angle, moved: 0, id: e.pointerId, horizontal: null };
+  });
+  window.addEventListener('pointermove', function(e){
+    if (!drag || e.pointerId !== drag.id) return;
+    var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    drag.moved = Math.max(drag.moved, Math.hypot(dx, dy));
+    if (drag.horizontal === null && drag.moved > 6) drag.horizontal = Math.abs(dx) > Math.abs(dy);
+    if (drag.horizontal) { target.angle = drag.start + dx * 0.012; hint.classList.add('gone'); }
+  });
+  window.addEventListener('pointerup', function(e){
+    if (!drag || e.pointerId !== drag.id) return;
+    var tap = drag.moved < 8; drag = null;
+    if (!tap) return;
+    var r = canvas.getBoundingClientRect();
+    ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    var hit = ray.intersectObjects(parts, false)[0];
+    if (!hit) return;
+    var local = body.worldToLocal(hit.point.clone());
+    var toCam = camera.position.clone().sub(hit.point).normalize();
+    var best = -1, bestD = Infinity;
+    HOTS.forEach(function(h, i){
+      var n = h.nv.clone().applyQuaternion(body.quaternion);
+      if (n.dot(toCam) < -0.1) return;
+      var d = h.pv.distanceTo(local);
+      if (d < bestD) { bestD = d; best = i; }
+    });
+    if (best >= 0 && bestD < 0.32) select(HOTS[best].r, best, 'body');
+  });
+
+  /* render loop */
+  var tmp = new V3(), last = performance.now();
+  function frame(now){
+    var dt = Math.min(0.05, (now - last) / 1000); last = now;
+    var k = reduce ? 1 : 1 - Math.pow(0.0015, dt);
+    view.angle += (target.angle - view.angle) * k;
+    view.dist += (target.dist - view.dist) * k;
+    view.camY += (target.camY - view.camY) * k;
+    view.look += (target.look - view.look) * k;
+    body.rotation.y = view.angle;
+    camera.position.set(0, view.camY, view.dist);
+    camera.lookAt(0, view.look, 0);
+    camera.updateMatrixWorld();
+
+    var front = Math.cos(view.angle) > 0;
+    vFront.setAttribute('aria-pressed', String(front)); vBack.setAttribute('aria-pressed', String(!front));
+
+    updateMuscles(k, now);
+    if (glow.visible && !reduce) { var s = 0.19 + Math.sin(now / 420) * 0.025; glow.scale.set(s, s, 1); }
+
+    for (var i = 0; i < HOTS.length; i++) {
+      var h = HOTS[i], el = hotEls[i];
+      tmp.copy(h.pv); body.localToWorld(tmp);
+      var n = h.nv.clone().applyQuaternion(body.quaternion);
+      var facing = n.dot(camera.position.clone().sub(tmp).normalize());
+      tmp.project(camera);
+      var x = (tmp.x * 0.5 + 0.5) * size.w, y = (-tmp.y * 0.5 + 0.5) * size.h;
+      el.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0)';
+      el.classList.toggle('away', facing < 0.06);
+    }
+    gl.render(scene, camera);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  boot();
+
+  function boot(){
+    var id = (location.hash || '').slice(1);
+    if (R[id]) setTimeout(function(){ select(id, null, 'hash'); }, reduce ? 0 : 600);
+  }
+})();
+</script>
+</body>
+</html>

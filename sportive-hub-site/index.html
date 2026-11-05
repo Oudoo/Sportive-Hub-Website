@@ -1,0 +1,908 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Sportive Hub, Movement Lab. Physiotherapy, EMS training, IV therapy, cupping and lymphatic drainage under one roof in Sheikh Zayed.">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Sportive Hub</title>
+<link rel="canonical" href="https://sportive-hub.com/">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Sportive Hub">
+<meta property="og:url" content="https://sportive-hub.com/">
+<meta property="og:title" content="Sportive Hub · Movement Lab">
+<meta property="og:description" content="Physiotherapy, EMS training, IV therapy, cupping and lymphatic drainage under one roof in Sheikh Zayed.">
+<meta property="og:image" content="https://sportive-hub.com/assets/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Sportive Hub, Movement Lab. Move well. Feel better. Live fully.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+/* Layout: full-bleed photo hero, hairline-ruled service grid, olive stat band, sticky process stack, WhatsApp booking. Single committed brand theme (Sportive Hub Vol.02 "Movement Lab"). */
+:root{
+  --olive:#595641;       /* #1 Olive Green, primary */
+  --sand:#BAA48D;        /* #2 Gray Orange */
+  --milk:#F0ECE3;        /* #4 Milk */
+  --pastel:#C9D6B8;      /* #5 Pastel Green */
+  --charcoal:#282828;    /* #6 Charcoal */
+  --ink:#282828;
+  --logo-white:#FFFFFF;  /* the white logo file is pure white */
+  --rule:rgba(40,40,40,.18);
+  --rule-dark:rgba(240,236,227,.18);
+  --font-sans:"Helvetica Neue","Helvetica Now Display",Helvetica,Arial,sans-serif;
+  --font-serif:"Instrument Serif",Georgia,"Times New Roman",serif;
+  --gutter:max(16px,env(safe-area-inset-left,0px));
+  --gutter-r:max(16px,env(safe-area-inset-right,0px));
+  --z-marquee:1;--z-sticky:10;--z-nav:20;--z-menu:30;--z-cursor:40;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+html.lenis,html.lenis body{height:auto}
+.lenis.lenis-smooth{scroll-behavior:auto!important}
+.lenis.lenis-stopped{overflow:hidden}
+body{margin:0;background:var(--milk);color:var(--ink);font-family:var(--font-sans);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{max-width:100%;display:block}
+a{color:inherit}
+h1,h2,h3{margin:0;font-weight:500;text-wrap:balance}
+p{margin:0;text-wrap:pretty}
+button{font:inherit}
+em,.it{font-family:var(--font-serif);font-style:italic;font-weight:400;letter-spacing:0}
+.wrap{padding-left:var(--gutter);padding-right:var(--gutter-r)}
+.inner{max-width:1440px;margin-inline:auto}
+:focus-visible{outline:2px solid var(--sand);outline-offset:3px}
+
+/* ---------- Wordmark ---------- */
+.logo{display:inline-flex;text-decoration:none;line-height:0}
+/* Official lockup from the brand files (GROW x Sportive, Oct 2026). One alpha master, coloured per the approved pairings:
+   white on olive, charcoal and gray orange; olive on milk and pastel green. */
+.logo-img{display:block;aspect-ratio:2251/520;max-width:100%;background-color:var(--logo-ink,var(--olive));
+  -webkit-mask:url("assets/logo.png") center/contain no-repeat;mask:url("assets/logo.png") center/contain no-repeat}
+
+/* ---------- Nav ---------- */
+.nav{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:var(--z-nav);display:flex;align-items:center;justify-content:space-between;gap:1rem;padding-block:14px;padding-left:var(--gutter);padding-right:var(--gutter-r);color:var(--charcoal);transition:background .4s,color .4s,box-shadow .4s}
+.nav.solid{background:var(--milk);color:var(--ink);box-shadow:0 1px 0 var(--rule)}
+.nav .logo{padding-block:7px}
+.nav .logo .logo-img{height:clamp(30px,3vw,38px);--logo-ink:var(--olive);transition:background-color .4s}
+.nav.solid .logo .logo-img{--logo-ink:var(--olive)}
+.nav ul{list-style:none;margin:0;padding:0;display:flex;gap:clamp(14px,2.5vw,36px);font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.nav ul a{text-decoration:none;opacity:.85}
+.nav ul a:hover{opacity:1}
+/* No CSS transition on transform here: GSAP animates button transforms (intro, magnetic hover), and a CSS transform transition leaves them stuck at their start offset. */
+.btn{display:inline-flex;align-items:center;gap:.8em;min-height:44px;padding:0 1.2em;border:1px solid currentColor;border-radius:2px;background:transparent;color:inherit;text-decoration:none;font-size:12px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .25s,color .25s}
+.btn svg{width:14px;height:14px;transition:transform .3s cubic-bezier(.22,1,.36,1)}
+.btn.fill{background:var(--charcoal);color:var(--milk);border-color:var(--charcoal)}
+.btn.fill:hover{background:var(--olive);border-color:var(--olive)}
+.btn.milk{background:var(--milk);color:var(--olive);border-color:var(--milk)}
+.btn.milk:hover{background:var(--pastel);border-color:var(--pastel)}
+.btn.sandfill{background:var(--sand);color:var(--charcoal);border-color:var(--sand)}
+.btn.sandfill:hover{background:var(--milk);border-color:var(--milk)}
+.nav .menu-btn{display:none}
+@media (max-width:860px){
+  .nav ul{display:none}
+  .nav .cta{display:none}
+  .nav .menu-btn{display:inline-flex}
+  .nav{background:var(--milk);box-shadow:0 1px 0 var(--rule)}
+}
+.sheet{position:fixed;inset:0;z-index:var(--z-menu);background:var(--olive);color:var(--milk);padding:calc(env(safe-area-inset-top,0px) + 80px) var(--gutter-r) 40px var(--gutter);display:none;flex-direction:column;justify-content:space-between}
+.sheet.open{display:flex}
+.sheet ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.2em}
+.sheet ul a{font-size:clamp(34px,9vw,56px);font-weight:500;letter-spacing:-.03em;text-decoration:none;text-transform:uppercase;line-height:1.05}
+.sheet .close{position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:var(--gutter-r)}
+
+/* ---------- Hero ---------- */
+.hero{position:relative;min-height:92svh;display:grid;align-items:end;color:var(--charcoal);overflow:hidden;background:var(--milk)}
+.hero .media{position:absolute;inset:-8% 0;will-change:transform}
+.hero .media img{width:100%;height:100%;object-fit:cover;object-position:82% 40%}
+.hero .media::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(240,236,227,.92) 0%,rgba(240,236,227,.78) 30%,rgba(240,236,227,.35) 46%,rgba(240,236,227,0) 60%)}
+.hero .content{position:relative;width:100%;display:grid;grid-template-columns:minmax(0,1fr);gap:1.8rem;align-items:end;justify-items:start;padding-block:0 clamp(28px,5vw,64px)}
+.hero .content > *{max-width:min(46%,640px)}
+.hero h1{font-size:clamp(2.6rem,6.2vw,6rem);line-height:.9;letter-spacing:-.035em;text-transform:uppercase;font-weight:500}
+.hero h1 .line{display:block;overflow:hidden}
+.hero h1 .line span{display:block}
+.hero h1 em{text-transform:none;font-size:1.04em}
+.hero .side{display:flex;flex-direction:column;align-items:flex-start;gap:1.4rem;max-width:min(46%,36ch)}
+.hero .side p{font-size:clamp(15px,1.2vw,18px);line-height:1.5;color:var(--charcoal)}
+@media (max-width:860px){
+  .hero{min-height:0;display:block}
+  .hero .media{position:relative;inset:auto;height:56svh;min-height:340px}
+  .hero .media img{object-position:70% 22%}
+  .hero .media::after{background:linear-gradient(0deg,rgba(240,236,227,1) 0%,rgba(240,236,227,0) 28%)}
+  .hero .content{gap:1.2rem;padding-block:6px 32px}
+  .hero .content > *,.hero .side{max-width:none}
+}
+
+/* ---------- Ticker ---------- */
+.ticker{background:var(--charcoal);color:var(--milk);border-top:1px solid var(--rule-dark);overflow:hidden;position:relative;z-index:var(--z-marquee)}
+.ticker .track{display:flex;width:max-content;animation:tick 42s linear infinite}
+.ticker .track span{padding:18px 0;font-size:13px;letter-spacing:.18em;text-transform:uppercase;white-space:nowrap}
+.ticker .track span::after{content:"·";margin:0 1.6em;color:var(--sand)}
+@keyframes tick{to{transform:translateX(-50%)}}
+
+/* ---------- Intro ---------- */
+.intro{padding-block:clamp(72px,10vw,140px) clamp(48px,7vw,100px);position:relative}
+.intro h2{text-align:center;font-size:clamp(2rem,4.6vw,4.2rem);line-height:1.02;letter-spacing:-.03em;max-width:22ch;margin-inline:auto}
+.intro h2 em{font-size:1.08em}
+.intro .stage{position:relative;margin-top:clamp(40px,6vw,88px)}
+.intro .ghost{position:absolute;inset:auto 0 -.1em 0;text-align:center;font-size:clamp(5rem,19vw,19rem);line-height:.8;font-weight:500;letter-spacing:-.05em;text-transform:uppercase;color:var(--pastel);opacity:.6;pointer-events:none;user-select:none;white-space:nowrap;overflow:hidden}
+.intro .frame{position:relative;max-width:760px;margin-inline:auto;padding:clamp(28px,4vw,56px);border:1px solid var(--rule);background:rgba(240,236,227,.86);backdrop-filter:blur(2px)}
+.intro .frame::before,.intro .frame::after,.intro .frame i::before,.intro .frame i::after{content:"";position:absolute;width:14px;height:14px;background:
+  linear-gradient(var(--olive),var(--olive)) center/100% 1px no-repeat,
+  linear-gradient(var(--olive),var(--olive)) center/1px 100% no-repeat}
+.intro .frame::before{top:-7px;left:-7px}.intro .frame::after{top:-7px;right:-7px}
+.intro .frame i::before{bottom:-7px;left:-7px}.intro .frame i::after{bottom:-7px;right:-7px}
+.intro .frame h3{font-size:clamp(1.3rem,2vw,1.7rem);line-height:1.2;letter-spacing:-.02em;margin-bottom:1rem}
+.intro .frame p{color:var(--olive);font-size:15px;max-width:62ch}
+.intro .frame p + p{margin-top:.8em}
+.intro .frame .btn{margin-top:1.6rem}
+.intro .float{position:absolute;width:clamp(110px,16vw,220px);aspect-ratio:4/5;object-fit:cover;border:1px solid var(--rule)}
+.intro .f1{left:0;top:-8%}
+.intro .f2{right:0;top:18%;aspect-ratio:1}
+.intro .f3{left:6%;bottom:-6%;width:clamp(90px,12vw,170px)}
+@media (max-width:860px){.intro .float{display:none}}
+
+/* ---------- Reveal paragraph ---------- */
+.reveal{padding-block:clamp(48px,7vw,100px)}
+.reveal p{font-size:clamp(1.5rem,3.4vw,3.1rem);line-height:1.12;letter-spacing:-.025em;font-weight:500;max-width:1100px}
+.reveal p .w{color:var(--ink);opacity:.18;transition:opacity .2s}
+.reveal p .w.on{opacity:1}
+.reveal p em{font-size:1.06em}
+
+/* ---------- Services ---------- */
+.services{padding-block:0 clamp(56px,8vw,120px)}
+.services .lead{display:grid;grid-template-columns:1fr 1.2fr;gap:2rem;padding-block:clamp(28px,4vw,56px);border-top:1px solid var(--rule)}
+.services .lead h2{font-size:clamp(1.8rem,3.6vw,3rem);letter-spacing:-.03em;line-height:1.05}
+.services .lead p{color:var(--olive);max-width:60ch;font-size:17px}
+.grid{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--rule);border-left:1px solid var(--rule)}
+.cell{position:relative;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:clamp(22px,3vw,40px);display:flex;flex-direction:column;gap:1.2rem;min-height:420px}
+.cell .head{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--olive)}
+.cell .head b{font-weight:400;font-variant-numeric:tabular-nums}
+.cell h3{font-size:clamp(2rem,4.2vw,3.6rem);letter-spacing:-.035em;line-height:.95;text-transform:uppercase}
+.cell h3 em{text-transform:none}
+.cell .pic{aspect-ratio:16/10;overflow:hidden;background:var(--olive)}
+.cell .pic img{width:100%;height:100%;object-fit:cover;transition:transform 1.2s cubic-bezier(.16,1,.3,1)}
+.cell:hover .pic img{transform:scale(1.04)}
+.cell p{color:var(--olive);max-width:48ch;font-size:16px;margin-top:auto}
+.cell ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:.5rem}
+.cell ul li{font-size:12px;letter-spacing:.06em;padding:.45em .8em;border:1px solid var(--rule);border-radius:999px}
+.cell .btn{align-self:flex-start}
+.more{display:grid;grid-template-columns:1fr 1.2fr;gap:2rem;padding-block:clamp(24px,3vw,40px);border-bottom:1px solid var(--rule);align-items:center}
+.more h3{font-size:clamp(1.2rem,1.8vw,1.5rem);letter-spacing:-.02em}
+.more h3 em{font-size:1.1em}
+.more ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:.6rem}
+.more ul li{font-size:13px;letter-spacing:.04em;padding:.6em 1em;border-radius:999px;background:var(--pastel);color:var(--olive)}
+@media (max-width:860px){
+  .services .lead,.more{grid-template-columns:1fr}
+  .grid{grid-template-columns:1fr}
+  .cell{min-height:0}
+}
+
+/* ---------- Team / numbers (olive) ---------- */
+.team{background:var(--olive);color:var(--milk);padding-block:clamp(64px,9vw,130px)}
+.team .top{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:end;border-bottom:1px solid var(--rule-dark);padding-bottom:clamp(40px,6vw,80px)}
+.team .big{font-size:clamp(7rem,22vw,20rem);line-height:.78;letter-spacing:-.06em;font-weight:500}
+.team .big small{display:block;font-size:clamp(1rem,1.6vw,1.4rem);letter-spacing:-.01em;font-weight:400;margin-top:1rem;max-width:26ch;line-height:1.25;color:var(--pastel)}
+.team .copy{display:flex;flex-direction:column;gap:1.2rem;max-width:52ch}
+.team .copy p{font-size:17px;line-height:1.55;color:rgba(240,236,227,.9)}
+.team .copy p.lg{font-size:clamp(1.25rem,2vw,1.6rem);line-height:1.25;letter-spacing:-.02em;color:var(--milk)}
+.team .copy .btn{align-self:flex-start;margin-top:.6rem}
+.numbers{display:grid;grid-template-columns:repeat(4,1fr);gap:0;padding-top:clamp(32px,4vw,56px)}
+.numbers > div{padding:1.2rem clamp(12px,2vw,28px) 1.2rem 0;border-right:1px solid var(--rule-dark)}
+.numbers > div:last-child{border-right:0}
+.numbers .n{font-size:clamp(3.4rem,7.2vw,7rem);line-height:.9;letter-spacing:-.05em;font-weight:500;font-variant-numeric:tabular-nums}
+.numbers .n em{font-size:1.02em}
+.numbers .l{margin-top:.9rem;font-size:13px;letter-spacing:.1em;text-transform:uppercase;line-height:1.4;color:var(--pastel);max-width:16ch}
+@media (max-width:860px){
+  .team .top{grid-template-columns:1fr;gap:2rem}
+  .numbers{grid-template-columns:1fr 1fr}
+  .numbers > div:nth-child(2){border-right:0}
+  .numbers > div{border-bottom:1px solid var(--rule-dark)}
+  .numbers > div:nth-child(n+3){border-bottom:0}
+}
+
+/* ---------- Big marquee band ---------- */
+.band{background:var(--charcoal);color:var(--milk);overflow:hidden;position:relative}
+.band .track{display:flex;width:max-content;animation:tick 30s linear infinite;padding-block:clamp(18px,3vw,36px)}
+.band .track > span{font-size:clamp(5rem,15vw,15rem);line-height:.9;letter-spacing:-.05em;text-transform:uppercase;font-weight:500;white-space:nowrap;padding-right:.35em}
+.band .track > span i{font-family:var(--font-serif);font-style:italic;font-weight:400;text-transform:none;font-size:1.2em;line-height:0;position:relative;top:-.03em;margin:0 -.02em}
+.band .track .bl{display:inline-flex;align-items:center;padding-right:.35em}
+.band .track .bl .logo-img{height:1.05em;--logo-ink:var(--logo-white)}
+.band .track > span::after{content:"";display:inline-block;width:.18em;height:.18em;background:var(--sand);border-radius:50%;vertical-align:middle;margin-left:.35em}
+.band .cta{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+.band .cta .btn{pointer-events:auto}
+
+/* ---------- Process ---------- */
+.process{padding-block:clamp(72px,10vw,140px)}
+.process .cols{display:grid;grid-template-columns:1fr 1.1fr;gap:clamp(2rem,5vw,6rem);align-items:start}
+.process .sticky{position:sticky;top:calc(env(safe-area-inset-top,0px) + 96px);display:flex;flex-direction:column;gap:1.4rem}
+.process h2{font-size:clamp(2.2rem,4.6vw,4rem);letter-spacing:-.035em;line-height:1}
+.process h2 em{font-size:1.06em}
+.process .sticky p{color:var(--olive);font-size:17px;max-width:46ch}
+.process .sticky .btn{align-self:flex-start}
+.stack{display:flex;flex-direction:column;gap:1rem}
+.step{position:sticky;top:calc(env(safe-area-inset-top,0px) + 96px);background:var(--milk);border:1px solid var(--rule);padding:clamp(22px,3vw,40px);display:grid;grid-template-columns:auto 1fr;gap:1.4rem;align-items:start;box-shadow:0 -1px 0 var(--milk)}
+.step:nth-child(2){top:calc(env(safe-area-inset-top,0px) + 112px)}
+.step:nth-child(3){top:calc(env(safe-area-inset-top,0px) + 128px)}
+.step:nth-child(4){top:calc(env(safe-area-inset-top,0px) + 144px)}
+.step .k{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--olive);font-variant-numeric:tabular-nums;padding-top:.5em}
+.step h3{font-size:clamp(1.6rem,2.6vw,2.3rem);letter-spacing:-.03em;line-height:1.05}
+.step p{color:var(--olive);margin-top:.8rem;max-width:48ch}
+.step .tag{display:inline-block;margin-top:1rem;font-size:12px;letter-spacing:.06em;padding:.4em .8em;background:var(--pastel);color:var(--olive);border-radius:999px}
+.step.sand{background:var(--sand);color:var(--charcoal)}
+.step.sand .k,.step.sand p{color:var(--charcoal)}
+.step.sand .tag{background:var(--charcoal);color:var(--milk)}
+.step.olive{background:var(--olive);color:var(--milk)}
+.step.olive .k,.step.olive p{color:var(--pastel)}
+.step.olive .tag{background:var(--milk);color:var(--olive)}
+.step.pastel{background:var(--pastel);color:var(--olive)}
+.step.pastel .k,.step.pastel p{color:var(--olive)}
+.step.pastel .tag{background:var(--olive);color:var(--milk)}
+@media (max-width:860px){
+  .process .cols{grid-template-columns:1fr}
+  .process .sticky{position:static}
+  .step{grid-template-columns:1fr;gap:.6rem}
+}
+
+/* ---------- Pain map teaser ---------- */
+.painmap{background:var(--olive);color:var(--milk);padding-block:clamp(56px,8vw,110px);margin-bottom:clamp(48px,7vw,96px)}
+.pm{display:grid;grid-template-columns:1fr 1fr;gap:clamp(2rem,5vw,6rem);align-items:center}
+.pm h2{font-size:clamp(2.4rem,6vw,5.6rem);line-height:.95;letter-spacing:-.04em;text-transform:uppercase}
+.pm h2 em{text-transform:none;font-size:1.06em}
+.pm-copy{display:flex;flex-direction:column;gap:1.4rem}
+.pm-copy p{font-size:17px;max-width:44ch;color:rgba(240,236,227,.9)}
+.pm-copy .btn{align-self:flex-start}
+.pm-areas{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:.6rem}
+.pm-areas a{display:inline-flex;align-items:center;min-height:44px;padding:0 1.1em;border:1px solid var(--rule-dark);border-radius:999px;text-decoration:none;font-size:15px;transition:background-color .3s,color .3s,border-color .3s}
+.pm-areas a:hover{background:var(--pastel);color:var(--olive);border-color:var(--pastel)}
+@media (max-width:860px){.pm{grid-template-columns:1fr}}
+
+/* ---------- Feed ---------- */
+.feed{padding-block:0 clamp(64px,9vw,120px)}
+.feed .head{display:flex;justify-content:space-between;align-items:end;gap:1rem;border-top:1px solid var(--rule);padding-block:clamp(24px,3vw,40px)}
+.feed h2{font-size:clamp(2.4rem,7vw,7rem);letter-spacing:-.045em;line-height:.9;text-transform:uppercase}
+.feed h2 em{text-transform:none}
+.feed .arrows{display:flex;gap:.5rem}
+.feed .arrows button{width:44px;height:44px;border:1px solid var(--ink);background:transparent;cursor:pointer;display:grid;place-items:center;border-radius:2px}
+.feed .arrows button:hover{background:var(--charcoal);color:var(--milk)}
+.feed .rail{display:flex;gap:1rem;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding-bottom:4px}
+.feed .rail::-webkit-scrollbar{display:none}
+.feed .rail figure{flex:0 0 clamp(220px,26vw,340px);margin:0;scroll-snap-align:start}
+.feed .rail img{aspect-ratio:4/5;width:100%;object-fit:cover;border:1px solid var(--rule)}
+.feed .rail figcaption{margin-top:.6rem;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--olive)}
+
+/* ---------- Booking ---------- */
+.book{position:relative;padding-block:clamp(56px,8vw,110px);border-top:1px solid var(--rule);overflow:hidden}
+.book .ghost{position:absolute;left:0;right:0;bottom:-.08em;text-align:center;font-size:clamp(4rem,15vw,15rem);line-height:.8;letter-spacing:-.05em;text-transform:uppercase;font-weight:500;color:var(--pastel);opacity:.55;white-space:nowrap;pointer-events:none;user-select:none}
+.book .cols{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:clamp(2rem,5vw,6rem);align-items:start}
+.book h2{font-size:clamp(1.9rem,3.6vw,3.2rem);letter-spacing:-.03em;line-height:1.05}
+.book h2 em{font-size:1.06em}
+.book .lead p{color:var(--olive);margin-top:1rem;max-width:44ch;font-size:17px}
+.book form{display:grid;gap:1rem;background:rgba(240,236,227,.9);border:1px solid var(--rule);padding:clamp(20px,3vw,36px)}
+.book label{display:grid;gap:.4rem;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--olive)}
+.book select,.book input{min-height:44px;font:inherit;font-size:16px;padding:.5em .8em;border:1px solid var(--olive);background:var(--milk);color:var(--ink);border-radius:2px;width:100%}
+.book select:focus,.book input:focus{outline:2px solid var(--olive);outline-offset:0;border-color:var(--olive)}
+.book .row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.book .out{display:flex;flex-wrap:wrap;align-items:center;gap:.8rem 1.2rem;margin-top:.4rem}
+.book .num{font-size:15px;letter-spacing:.02em;user-select:all;font-variant-numeric:tabular-nums}
+.book .copy{min-height:44px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:none;border:0;border-bottom:1px solid currentColor;padding:0 0 2px;cursor:pointer;color:var(--olive)}
+.book .status{font-size:13px;color:var(--olive);min-height:1.2em}
+@media (max-width:860px){.book .cols,.book .row{grid-template-columns:1fr}}
+
+/* ---------- Footer ---------- */
+footer{background:var(--charcoal);color:var(--milk)}
+footer .top{display:grid;grid-template-columns:1fr 1.4fr;gap:clamp(2rem,5vw,6rem);padding-block:clamp(48px,7vw,100px) clamp(32px,5vw,64px)}
+footer .photo{aspect-ratio:4/3;overflow:hidden;background:var(--olive)}
+footer .photo img{width:100%;height:100%;object-fit:cover;filter:saturate(.25) contrast(1.05) brightness(.9)}
+footer .links{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem 1.5rem}
+footer .links h4{margin:0 0 .5rem;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--sand);font-weight:400}
+footer .links ul{list-style:none;margin:0;padding:0;display:grid;gap:0}
+footer .links a{text-decoration:none;font-size:16px;display:inline-flex;align-items:center;min-height:36px}
+@media (pointer:coarse){footer .links a{min-height:44px}}
+footer .links a:hover{text-decoration:underline;text-underline-offset:3px}
+footer .links address{font-style:normal;font-size:15px;line-height:1.55;color:rgba(240,236,227,.85)}
+footer .links address + address{margin-top:1rem}
+footer .links address b{display:block;font-weight:500;color:var(--milk)}
+footer .links .num{user-select:all;font-variant-numeric:tabular-nums}
+footer .mark{border-top:1px solid var(--rule-dark);padding-block:clamp(20px,3vw,40px) clamp(20px,4vw,48px);overflow:hidden}
+footer .mark{display:grid;place-items:center}
+footer .mark .logo-img{width:min(100%,1180px);--logo-ink:var(--logo-white)}
+footer .legal{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.6rem 2rem;padding-block:0 clamp(20px,3vw,36px);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:rgba(240,236,227,.6)}
+@media (max-width:860px){
+  footer .top{grid-template-columns:1fr}
+  footer .links{grid-template-columns:1fr 1fr}
+}
+
+
+/* ---------- Motion layer ---------- */
+.over{position:relative;z-index:2;background:var(--milk);overflow-x:clip}
+.intro{overflow-x:clip}
+.hero{z-index:1}
+.btn{position:relative;overflow:hidden;isolation:isolate}
+.btn::before{content:"";position:absolute;inset:0;background:currentColor;opacity:.1;transform:scaleX(0);transform-origin:right center;transition:transform .55s cubic-bezier(.22,1,.36,1);z-index:-1}
+.btn:hover::before{transform:scaleX(1);transform-origin:left center}
+.btn .ar{position:relative;display:inline-block;width:14px;height:14px;overflow:hidden;flex:none}
+.btn .ar svg{position:absolute;inset:0;transition:transform .45s cubic-bezier(.22,1,.36,1)}
+.btn .ar svg + svg{transform:translateX(-160%)}
+.btn:hover .ar svg:first-child{transform:translateX(160%)}
+.btn:hover .ar svg + svg{transform:translateX(0)}
+.step{transform-origin:50% 0;will-change:transform}
+.cell .pic,.feed .rail figure .clip,footer .photo,.intro .float{will-change:clip-path}
+.feed .rail figure .clip{overflow:hidden}
+.split-line{padding-bottom:.06em;margin-bottom:-.06em}
+.band .track,.ticker .track{will-change:transform}
+.js-motion .band .track,.js-motion .ticker .track{animation:none}
+.nav ul a{position:relative}
+.nav ul a::after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:1px;background:currentColor;transform:scaleX(0);transform-origin:right;transition:transform .45s cubic-bezier(.22,1,.36,1)}
+.nav ul a:hover::after{transform:scaleX(1);transform-origin:left}
+
+
+/* ---------- Cursor + magnetic ---------- */
+.c-dot,.c-ring{position:fixed;left:0;top:0;z-index:var(--z-cursor);pointer-events:none;border-radius:50%;mix-blend-mode:difference;opacity:0;transition:opacity .3s}
+.c-dot{width:8px;height:8px;background:var(--milk)}
+.c-ring{width:44px;height:44px;border:1px solid var(--milk);display:grid;place-items:center;transition:opacity .3s,background-color .35s,border-color .35s}
+.c-ring span{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--charcoal);opacity:0;transform:scale(.6);transition:opacity .25s,transform .35s cubic-bezier(.22,1,.36,1);white-space:nowrap}
+html.has-cursor .c-dot,html.has-cursor .c-ring{opacity:1}
+html.has-cursor .c-ring.fill{background-color:var(--milk)}
+html.has-cursor .c-ring.label span{opacity:1;transform:scale(1)}
+html.has-cursor .c-dot.hide,html.has-cursor .c-ring.off,html.has-cursor .c-dot.off{opacity:0}
+html.has-cursor,html.has-cursor *{cursor:none}
+html.has-cursor input,html.has-cursor select,html.has-cursor textarea{cursor:auto}
+html.has-cursor select{cursor:pointer}
+.btn .ar{will-change:transform}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .ticker .track,.band .track{animation:none}
+  .hero .media{inset:0}
+  .reveal p .w{opacity:1}
+  .cell .pic img,.btn svg{transition:none}
+  .step{position:static}
+  .btn .ar svg,.btn::before,.nav ul a::after{transition:none}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav" id="nav" aria-label="Main">
+  <a class="logo" href="#top" aria-label="Sportive Hub, Movement Lab, back to top"><span class="logo-img"></span></a>
+  <ul>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#team">Who we are</a></li>
+    <li><a href="#process">How it works</a></li>
+    <li><a href="where-it-hurts.html">Where it hurts</a></li>
+    <li><a href="#locations">Locations</a></li>
+  </ul>
+  <a class="btn cta" href="https://wa.me/201035555380?text=Hi%20Sportive%20Hub%2C%20I%27d%20like%20to%20book%20a%20session." target="_blank" rel="noopener">Book on WhatsApp <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+  <button class="btn menu-btn" id="menuBtn" aria-expanded="false" aria-controls="sheet">Menu</button>
+</nav>
+<div class="sheet" id="sheet" role="dialog" aria-label="Menu">
+  <button class="btn close" id="closeBtn">Close</button>
+  <ul>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#team">Who we are</a></li>
+    <li><a href="#process">How it works</a></li>
+    <li><a href="where-it-hurts.html">Where it hurts</a></li>
+    <li><a href="#locations">Locations</a></li>
+    <li><a href="#book">Book</a></li>
+  </ul>
+  <a class="btn milk" href="https://wa.me/201035555380?text=Hi%20Sportive%20Hub%2C%20I%27d%20like%20to%20book%20a%20session." target="_blank" rel="noopener">Book on WhatsApp</a>
+</div>
+
+<main id="top">
+<section class="hero" aria-label="Sportive Hub">
+  <div class="media" id="heroMedia"><img src="assets/gen-hero.jpg" alt="A woman in an olive training set drives into a deep forward lunge in a sunlit studio" fetchpriority="high"></div>
+  <div class="content wrap inner">
+    <h1 id="heroTitle">
+      <span class="line"><span>Move well.</span></span>
+      <span class="line"><span>Feel better.</span></span>
+      <span class="line"><span>Live <em>fully.</em></span></span>
+    </h1>
+    <div class="side">
+      <p>Sportive Hub is a movement and recovery clinic in Sheikh Zayed. Five specialised physiotherapists, EMS training, IV therapy, cupping and lymphatic drainage, under one roof, so recovery becomes a routine you keep.</p>
+      <a class="btn fill" href="#book">Start your recovery <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+    </div>
+  </div>
+</section>
+
+<div class="over">
+<div class="ticker" aria-hidden="true">
+  <div class="track">
+    <span>Physiotherapy</span><span>EMS training</span><span>IV therapy</span><span>Cupping</span><span>Lymphatic drainage</span><span>Women's health physio</span><span>Orthopaedics</span><span>Rheumatology</span><span>Neuro rehab</span><span>Psychiatry</span>
+    <span>Physiotherapy</span><span>EMS training</span><span>IV therapy</span><span>Cupping</span><span>Lymphatic drainage</span><span>Women's health physio</span><span>Orthopaedics</span><span>Rheumatology</span><span>Neuro rehab</span><span>Psychiatry</span>
+  </div>
+</div>
+
+<section class="intro wrap" id="about">
+  <div class="inner">
+    <h2>You don't have to be an athlete to need <em>recovery.</em></h2>
+    <div class="stage">
+      <div class="ghost" aria-hidden="true">One roof</div>
+      <img class="float f1" src="assets/gen-hipflexor.jpg" alt="A woman in olive holds a kneeling hip flexor stretch, arms overhead">
+      <img class="float f2" src="assets/gen-calfraise.jpg" alt="A slow calf raise on the edge of a concrete step">
+      <img class="float f3" src="assets/gen-birddog.jpg" alt="A woman in a sand hijab and olive set holds a bird dog on a mat">
+      <div class="frame"><i></i>
+        <h3>Everything your body needs, in one place.</h3>
+        <p>A demanding workout. Long hours at a desk. An old injury. A new baby. Persistent tension. Everyone arrives with a different reason, and every reason gets the same thing: a physiotherapist who assesses first, a plan built around your body, and the equipment to carry it out in the same building.</p>
+        <p>No referrals between clinics. No chasing appointments across town. Your physio, your EMS coach and your IV nurse are a corridor apart.</p>
+        <a class="btn fill" href="#services">See what we do <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="reveal wrap" aria-label="Our approach">
+  <div class="inner">
+    <p id="revealText">Most places do one thing. Physio here, EMS there, a drip somewhere else. Sportive Hub puts all of it under one roof and starts every plan the same way, with an assessment by a licensed physiotherapist, so what you book is what your body <em>actually</em> needs.</p>
+  </div>
+</section>
+
+<section class="services wrap" id="services">
+  <div class="inner">
+    <div class="lead">
+      <h2>Our services</h2>
+      <p>Four ways in, one standard. Whether you come for pain, performance or energy, a physiotherapist looks first and the plan follows. These are the services you can book today at Beverly, Sheikh Zayed.</p>
+    </div>
+    <div class="grid">
+      <article class="cell">
+        <div class="head"><span>Service</span><b>001</b></div>
+        <h3>Physio<wbr>therapy</h3>
+        <div class="pic"><img src="assets/gen-physio.jpg" alt="A physiotherapist's hands work on a patient's shoulder blade" loading="lazy"></div>
+        <p>Five physiotherapists, each specialised differently: sports injury, orthopaedic, women's health, neuro and rheumatology. Single-part and two-part sessions, with six and twelve session courses.</p>
+        <ul><li>Sports</li><li>Orthopaedic</li><li>Post-surgical</li><li>Women's health</li><li>Neuro</li></ul>
+        <a class="btn" href="#book" data-service="Physiotherapy">Book physiotherapy <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+      </article>
+      <article class="cell">
+        <div class="head"><span>Service</span><b>002</b></div>
+        <h3>EMS <em>training</em></h3>
+        <div class="pic"><img src="assets/gen-ems.jpg" alt="A woman in an EMS suit holds a squat while a coach tracks the session on a tablet" loading="lazy"></div>
+        <p>Twenty minutes in an electro-muscle-stimulation suit, coached one to one, working more muscle than a full gym hour. Built for people with no time, and for rebuilding strength after injury without loading the joint.</p>
+        <ul><li>20-minute sessions</li><li>1 to 24 session packs</li><li>Coached 1:1</li></ul>
+        <a class="btn" href="#book" data-service="EMS training">Book EMS <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+      </article>
+      <article class="cell">
+        <div class="head"><span>Service</span><b>003</b></div>
+        <h3>IV <em>therapy</em></h3>
+        <div class="pic"><img src="assets/gen-iv.jpg" alt="A woman relaxes in a lounge chair during an IV drip while a nurse checks the line" loading="lazy"></div>
+        <p>Recovery, immunity, detox, natural glow, muscle building and NAD+ drips, administered by a nurse after a screening. For the week you can't afford to be run down.</p>
+        <ul><li>Recovery</li><li>Immunity</li><li>Detox</li><li>NAD+</li><li>Nurse-administered</li></ul>
+        <a class="btn" href="#book" data-service="IV therapy">Book a drip <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+      </article>
+      <article class="cell">
+        <div class="head"><span>Service</span><b>004</b></div>
+        <h3>Recovery &amp; <em>drainage</em></h3>
+        <div class="pic"><img src="assets/gen-recovery.jpg" alt="A physiotherapist supports a patient's leg through an assisted hamstring stretch" loading="lazy"></div>
+        <p>Cupping, half or full body, and manual lymphatic drainage from thirty to ninety minutes. The post-surgical and post-partum course people come to us for, sold in sixes and twelves because results build session on session.</p>
+        <ul><li>Cupping</li><li>Lymphatic drainage</li><li>Post-surgical</li><li>Post-partum</li></ul>
+        <a class="btn" href="#book" data-service="Lymphatic drainage or cupping">Book recovery <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+      </article>
+    </div>
+    <div class="more">
+      <h3>Also under the <em>same</em> roof</h3>
+      <ul><li>Women's health physiotherapy</li><li>Orthopaedics</li><li>Rheumatology</li><li>Neuro rehabilitation</li><li>Psychiatry</li></ul>
+    </div>
+  </div>
+</section>
+
+<section class="team wrap" id="team">
+  <div class="inner">
+    <div class="top">
+      <div class="big">5<small>Physiotherapists, each specialised differently, all licensed, all in one building.</small></div>
+      <div class="copy">
+        <p class="lg">This isn't a gym with a treatment room at the back. It's a clinic where the treatment room comes first.</p>
+        <p>Every plan at Sportive Hub starts with a physiotherapist, and every physiotherapist here has a specialism: sports injury, orthopaedic rehab, women's health and post-partum, neuro, rheumatology. The EMS coaches and IV nurses work from that assessment, not around it.</p>
+        <p>We want you loyal to the way you feel after a course here, not to any one name on the door.</p>
+        <a class="btn milk" href="#book">Book an assessment <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+      </div>
+    </div>
+    <div class="numbers" aria-label="Sportive Hub in numbers">
+      <div><div class="n">5</div><div class="l">Specialised physiotherapists</div></div>
+      <div><div class="n">10</div><div class="l">Disciplines under one roof</div></div>
+      <div><div class="n">2</div><div class="l">Branches, Sheikh Zayed and Almaza Bay</div></div>
+      <div><div class="n">12<em>h</em></div><div class="l">Open every day, six treatment rooms</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="band" aria-hidden="true">
+  <div class="track">
+    <span class="bl"><span class="logo-img"></span></span><span>Train. Recover. <i>Repeat.</i></span><span class="bl"><span class="logo-img"></span></span><span>Train. Recover. <i>Repeat.</i></span><span class="bl"><span class="logo-img"></span></span><span>Train. Recover. <i>Repeat.</i></span><span class="bl"><span class="logo-img"></span></span><span>Train. Recover. <i>Repeat.</i></span>
+  </div>
+  <div class="cta"><a class="btn sandfill" href="#book">Book a session <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></div>
+</div>
+
+<section class="process wrap" id="process">
+  <div class="inner cols">
+    <div class="sticky">
+      <h2>How recovery <em>actually</em> gets built</h2>
+      <p>Whether you're training for a race, getting back from surgery, or carrying a newborn and a sore back, the order is the same. Assess first, treat second, train third, then keep it.</p>
+      <p>It's the same sequence our physiotherapists use with professional athletes, and it's what every patient gets from day one.</p>
+      <a class="btn fill" href="#book">Start with an assessment <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+    </div>
+    <div class="stack">
+      <div class="step"><div class="k">Step 01</div><div><h3>Assess, no guesswork</h3><p>A licensed physiotherapist takes your history, watches you move, and finds the actual cause. You leave the first visit knowing what's wrong and what the plan is.</p><span class="tag">Every patient, every time</span></div></div>
+      <div class="step sand"><div class="k">Step 02</div><div><h3>Treat the cause</h3><p>Hands-on physiotherapy, cupping or lymphatic drainage, matched to the assessment. Pain comes down before anything gets loaded.</p><span class="tag">Physio · Cupping · Drainage</span></div></div>
+      <div class="step olive"><div class="k">Step 03</div><div><h3>Rebuild strength</h3><p>EMS sessions and guided exercise bring the muscle back without stressing the joint. Twenty minutes, coached, measured against where you started.</p><span class="tag">EMS · Guided exercise</span></div></div>
+      <div class="step pastel"><div class="k">Step 04</div><div><h3>Keep it</h3><p>A maintenance rhythm you can actually hold: a monthly drainage or drip, a weekly EMS slot, a physio check when something changes. Recovery as a routine, not an emergency.</p><span class="tag">Courses of 6 and 12</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="painmap wrap" aria-label="Where it hurts">
+  <div class="inner pm">
+    <div class="pm-copy">
+      <h2>Where does it <em>hurt?</em></h2>
+      <p>Tap the spot on a 3D body and get the home exercises our physiotherapists start people on, for your neck, back, shoulder, knee and more. Free, no sign-up.</p>
+      <a class="btn milk" href="where-it-hurts.html">Open the pain map <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+    </div>
+    <ul class="pm-areas" aria-label="Areas covered">
+      <li><a href="where-it-hurts.html#neck">Neck</a></li><li><a href="where-it-hurts.html#shoulder">Shoulder</a></li><li><a href="where-it-hurts.html#upper-back">Upper back</a></li><li><a href="where-it-hurts.html#lower-back">Lower back</a></li><li><a href="where-it-hurts.html#core">Core &amp; pelvic floor</a></li><li><a href="where-it-hurts.html#elbow">Elbow</a></li><li><a href="where-it-hurts.html#wrist">Wrist &amp; hand</a></li><li><a href="where-it-hurts.html#hip">Hip</a></li><li><a href="where-it-hurts.html#knee">Knee</a></li><li><a href="where-it-hurts.html#ankle">Ankle &amp; foot</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="feed wrap" aria-label="From the feed">
+  <div class="inner">
+    <div class="head">
+      <h2>From the <em>lab</em></h2>
+      <div class="arrows"><button type="button" id="prev" aria-label="Scroll back"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 8H3M7 4L3 8l4 4"/></svg></button><button type="button" id="next" aria-label="Scroll forward"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></button></div>
+    </div>
+    <div class="rail" id="rail">
+      <figure><div class="clip"><img src="assets/post-1.jpg" alt="Kettlebell held overhead on pastel green: you don't have to be an athlete to need recovery" loading="lazy"></div><figcaption>Recovery is for everyone</figcaption></figure>
+      <figure><div class="clip"><img src="assets/post-2.jpg" alt="A sprinter blurred mid-stride: some days your body asks for more" loading="lazy"></div><figcaption>Some days, your body asks for more</figcaption></figure>
+      <figure><div class="clip"><img src="assets/post-12.jpg" alt="A woman pressing dumbbells overhead: more than recovery" loading="lazy"></div><figcaption>Movement. Recovery. Wellbeing.</figcaption></figure>
+      <figure><div class="clip"><img src="assets/post-10.jpg" alt="Take care of all of you: women's health, mental wellbeing and neurological support" loading="lazy"></div><figcaption>Take care of all of you</figcaption></figure>
+      <figure><div class="clip"><img src="assets/post-6.jpg" alt="Recovery looks different for everyone" loading="lazy"></div><figcaption>Find yours at Sportive Hub</figcaption></figure>
+      <figure><div class="clip"><img src="assets/post-5.jpg" alt="Real people, real progress" loading="lazy"></div><figcaption>Real people. Real progress.</figcaption></figure>
+      <figure><div class="clip"><img src="assets/post-16.jpg" alt="Move well, feel better, live fully" loading="lazy"></div><figcaption>Welcome to Sportive Hub</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section class="book wrap" id="book">
+  <div class="ghost" aria-hidden="true">Book a session</div>
+  <div class="inner cols">
+    <div class="lead">
+      <h2>Book on WhatsApp, in <em>one</em> tap.</h2>
+      <p>Tell us what you need and which branch suits you. We'll open a WhatsApp chat with the details filled in, and the clinic team confirms your slot from there. No app, no account.</p>
+    </div>
+    <form id="bookForm" novalidate>
+      <label for="svc">What do you need
+        <select id="svc" name="service">
+          <option>Physiotherapy assessment</option>
+          <option>Physiotherapy</option>
+          <option>EMS training</option>
+          <option>IV therapy</option>
+          <option>Lymphatic drainage or cupping</option>
+          <option>Women's health physiotherapy</option>
+          <option>Not sure yet</option>
+        </select>
+      </label>
+      <div class="row">
+        <label for="branch">Branch
+          <select id="branch" name="branch">
+            <option>Beverly, Sheikh Zayed</option>
+            <option>Almaza Bay, North Coast</option>
+          </select>
+        </label>
+        <label for="when">Preferred time
+          <select id="when" name="when">
+            <option>Morning</option><option>Afternoon</option><option>Evening</option><option>Any time</option>
+          </select>
+        </label>
+      </div>
+      <label for="name">Your name <input id="name" name="name" type="text" autocomplete="name" placeholder="So the team knows who's writing"></label>
+      <a class="btn fill" id="waLink" href="https://wa.me/201035555380" target="_blank" rel="noopener">Open WhatsApp with my request <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+      <div class="out"><span class="num">+20 103 5555 380</span><button type="button" class="copy" id="copyNum">Copy number</button></div>
+      <div class="status" id="status" aria-live="polite"></div>
+    </form>
+  </div>
+</section>
+</div>
+</main>
+
+<footer id="locations">
+  <div class="wrap">
+    <div class="inner top">
+      <div class="photo"><img src="assets/footer.jpg" alt="An empty training floor at night, machines in silhouette against the windows" loading="lazy"></div>
+      <div class="links">
+        <div>
+          <h4>Services</h4>
+          <ul><li><a href="#services">Physiotherapy</a></li><li><a href="#services">EMS training</a></li><li><a href="#services">IV therapy</a></li><li><a href="#services">Cupping</a></li><li><a href="#services">Lymphatic drainage</a></li><li><a href="#services">Women's health</a></li></ul>
+        </div>
+        <div>
+          <h4>Clinic</h4>
+          <ul><li><a href="#team">Who we are</a></li><li><a href="#process">How it works</a></li><li><a href="#book">Book a session</a></li><li><a href="https://www.instagram.com/sportivehub_/" target="_blank" rel="noopener">Instagram</a></li></ul>
+          <h4 style="margin-top:1.4rem">Contact</h4>
+          <ul><li><span class="num">info@sportive-hub.com</span></li><li><span class="num">+20 103 5555 380</span></li></ul>
+        </div>
+        <div>
+          <h4>Locations</h4>
+          <address><b>Beverly, Sheikh Zayed</b>SODIC Medical District<br>Building 4, 2nd floor, Clinic 212<br>Sheikh Zayed, Giza</address>
+          <address><b>Almaza Bay</b>North Coast<br>Seasonal, summer opening</address>
+        </div>
+      </div>
+    </div>
+    <div class="inner mark"><span class="logo-img" role="img" aria-label="Sportive Hub, Movement Lab"></span></div>
+    <div class="inner legal"><span>© 2026 Sportive Hub · Movement Lab</span><span>Train. Recover. Repeat.</span></div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/SplitText.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var nav = document.getElementById('nav');
+  var hero = document.querySelector('.hero');
+
+  /* nav turns solid after the hero */
+  function onScroll(){ nav.classList.toggle('solid', window.scrollY > hero.offsetHeight - 80); }
+  window.addEventListener('scroll', onScroll, {passive:true}); onScroll();
+
+  /* mobile sheet */
+  var sheet = document.getElementById('sheet'), menuBtn = document.getElementById('menuBtn');
+  function openSheet(){ sheet.classList.add('open'); menuBtn.setAttribute('aria-expanded','true'); document.body.style.overflow='hidden'; }
+  function closeSheet(){ sheet.classList.remove('open'); menuBtn.setAttribute('aria-expanded','false'); document.body.style.overflow=''; }
+  menuBtn.addEventListener('click', openSheet);
+  document.getElementById('closeBtn').addEventListener('click', closeSheet);
+  sheet.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', closeSheet); });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeSheet(); });
+
+  /* feed rail */
+  var rail = document.getElementById('rail');
+  function step(){ var f = rail.querySelector('figure'); return f ? f.getBoundingClientRect().width + 16 : 300; }
+  document.getElementById('prev').addEventListener('click', function(){ rail.scrollBy({left:-step(), behavior: reduce?'auto':'smooth'}); });
+  document.getElementById('next').addEventListener('click', function(){ rail.scrollBy({left: step(), behavior: reduce?'auto':'smooth'}); });
+
+  /* booking: build a WhatsApp link from the form */
+  var svc = document.getElementById('svc'), branch = document.getElementById('branch'), when = document.getElementById('when'), name = document.getElementById('name'), wa = document.getElementById('waLink'), status = document.getElementById('status');
+  function build(){
+    var who = name.value.trim();
+    var msg = 'Hi Sportive Hub' + (who ? ', this is ' + who : '') + '. I\'d like to book ' + svc.value.toLowerCase() + ' at ' + branch.value + ', ' + when.value.toLowerCase() + ' if possible. What slots do you have?';
+    wa.href = 'https://wa.me/201035555380?text=' + encodeURIComponent(msg);
+  }
+  [svc, branch, when, name].forEach(function(el){ el.addEventListener('input', build); el.addEventListener('change', build); });
+  build();
+  document.getElementById('bookForm').addEventListener('submit', function(e){ e.preventDefault(); wa.click(); });
+  document.querySelectorAll('[data-service]').forEach(function(a){
+    a.addEventListener('click', function(){
+      var want = a.getAttribute('data-service');
+      Array.prototype.forEach.call(svc.options, function(o){ if(o.text === want) svc.value = o.text; });
+      build();
+    });
+  });
+  document.getElementById('copyNum').addEventListener('click', function(){
+    var n = '+20 103 5555 380';
+    function fallback(){ var r = document.createRange(); r.selectNodeContents(document.querySelector('.book .num')); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); status.textContent = 'Number selected. Press copy on your keyboard.'; }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(n).then(function(){ status.textContent = 'Number copied.'; }, fallback);
+    } else fallback();
+  });
+
+  /* reveal paragraph: wrap words */
+  var rt = document.getElementById('revealText');
+  (function wrap(node){
+    Array.prototype.slice.call(node.childNodes).forEach(function(ch){
+      if (ch.nodeType === 3) {
+        var frag = document.createDocumentFragment();
+        ch.textContent.split(/(\s+)/).forEach(function(t){
+          if (!t) return;
+          if (/^\s+$/.test(t)) { frag.appendChild(document.createTextNode(t)); return; }
+          var s = document.createElement('span'); s.className='w'; s.textContent=t; frag.appendChild(s);
+        });
+        node.replaceChild(frag, ch);
+      } else if (ch.nodeType === 1) wrap(ch);
+    });
+  })(rt);
+  var words = rt.querySelectorAll('.w');
+
+  if (reduce || !window.gsap || !window.ScrollTrigger) { words.forEach(function(w){ w.classList.add('on'); }); return; }
+  gsap.registerPlugin(ScrollTrigger);
+  if (window.SplitText) gsap.registerPlugin(SplitText);
+  document.documentElement.classList.add('js-motion');
+  var EASE = 'expo.out';
+  var vh = function(){ return window.innerHeight; };
+  /* hide only what starts below the fold, and only on a visible tab, so the first frame is always complete */
+  var canHide = !document.hidden;
+  function below(el){ return canHide && el.getBoundingClientRect().top > vh() * 0.92; }
+
+  /* ---- Smooth inertial scroll ---- */
+  var lenis = null;
+  if (window.Lenis) {
+    document.documentElement.style.scrollBehavior = 'auto';
+    lenis = new Lenis({ lerp: 0.09, wheelMultiplier: 0.95, smoothWheel: true });
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add(function(t){ lenis.raf(t * 1000); });
+    gsap.ticker.lagSmoothing(0);
+    document.querySelectorAll('a[href^="#"]').forEach(function(a){
+      a.addEventListener('click', function(e){
+        var id = a.getAttribute('href'); if (id.length < 2) return;
+        var t = document.querySelector(id); if (!t) return;
+        e.preventDefault(); lenis.scrollTo(t, { offset: id === '#top' ? 0 : -64, duration: 1.4 });
+      });
+    });
+    menuBtn.addEventListener('click', function(){ lenis.stop(); });
+    document.getElementById('closeBtn').addEventListener('click', function(){ lenis.start(); });
+    sheet.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', function(){ lenis.start(); }); });
+  }
+
+  /* ---- Buttons: arrow slides out, a second slides in ---- */
+  document.querySelectorAll('.btn svg').forEach(function(svg){
+    var wrap = document.createElement('span'); wrap.className = 'ar'; wrap.setAttribute('aria-hidden','true');
+    svg.parentNode.insertBefore(wrap, svg); wrap.appendChild(svg); wrap.appendChild(svg.cloneNode(true));
+  });
+
+  /* ---- Load: nav drops in, photo settles, lines rise ---- */
+  var intro = gsap.timeline({ defaults: { ease: EASE } });
+  intro.from('#heroMedia img', { scale: 1.18, duration: 2.2 }, 0)
+       .from('#heroTitle .line > span', { yPercent: 110, duration: 1.3, stagger: 0.09 }, 0.15)
+       .from('.hero .side > *', { y: 24, opacity: 0, duration: 1, stagger: 0.08 }, 0.6)
+       .from('.nav > *', { y: -16, opacity: 0, duration: 0.9, stagger: 0.06 }, 0.3);
+
+  /* ---- Pinned hero: the page slides over it ---- */
+  ScrollTrigger.create({ trigger: '.hero', start: 'top top', end: 'bottom top', pin: true, pinSpacing: false });
+  gsap.to('.hero .content', { y: -80, opacity: 0, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: '70% top', scrub: true } });
+  gsap.to('#heroMedia', { scale: 1.08, filter: 'brightness(.55)', ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
+
+  /* ---- Marquees: drift on their own, speed up with scroll, follow its direction ---- */
+  var tracks = Array.prototype.slice.call(document.querySelectorAll('.ticker .track, .band .track')).map(function(el, i){
+    return { el: el, x: 0, base: i === 0 ? 0.55 : 1.1, boost: 0 };
+  });
+  var dir = 1;
+  gsap.ticker.add(function(time, dt){
+    var v = lenis ? lenis.velocity : 0;
+    if (Math.abs(v) > 0.1) dir = v > 0 ? 1 : -1;
+    tracks.forEach(function(t){
+      var half = t.el.scrollWidth / 2; if (!half) return;
+      t.boost += (Math.min(Math.abs(v), 60) * 0.35 - t.boost) * 0.08;
+      t.x = gsap.utils.wrap(-half, 0, t.x - (t.base + t.boost) * dir * (dt / 16.67));
+      t.el.style.transform = 'translate3d(' + t.x + 'px,0,0)';
+    });
+  });
+
+  /* ---- Headings: masked line reveals ---- */
+  var heads = '.pm h2, .intro h2, .services .lead h2, .team .copy .lg, .process h2, .feed h2, .book h2, .more h3, .cell h3, .intro .frame h3';
+  document.querySelectorAll(heads).forEach(function(el){
+    if (!below(el)) return;
+    if (window.SplitText) {
+      SplitText.create(el, { type: 'lines', mask: 'lines', linesClass: 'split-line', autoSplit: true, onSplit: function(self){
+        return gsap.from(self.lines, { yPercent: 105, duration: 1.15, ease: EASE, stagger: 0.08, scrollTrigger: { trigger: el, start: 'top 88%', once: true } });
+      }});
+    } else {
+      gsap.from(el, { y: 40, opacity: 0, duration: 1.1, ease: EASE, scrollTrigger: { trigger: el, start: 'top 88%', once: true } });
+    }
+  });
+
+  /* ---- Copy blocks: staggered rise, batched per row ---- */
+  var copy = Array.prototype.filter.call(document.querySelectorAll(
+    '.pm-copy p, .pm-copy .btn, .pm-areas li, .intro .frame p, .intro .frame .btn, .services .lead p, .cell .head, .cell p, .cell ul li, .cell .btn, .more ul li, .team .copy > p:not(.lg), .team .copy .btn, .numbers > div, .process .sticky p, .process .sticky .btn, .step .tag, .book .lead p, .book form, footer .links > div, footer .legal > span'
+  ), below);
+  gsap.set(copy, { y: 28, opacity: 0 });
+  ScrollTrigger.batch(copy, { start: 'top 92%', once: true, onEnter: function(batch){
+    gsap.to(batch, { y: 0, opacity: 1, duration: 1, ease: EASE, stagger: 0.06, overwrite: true });
+  }});
+
+  /* ---- Images: wipe up from the bottom edge while the photo settles ---- */
+  var wipes = Array.prototype.filter.call(document.querySelectorAll('.cell .pic, .feed .rail figure .clip, footer .photo, .intro .float'), below);
+  wipes.forEach(function(el, i){
+    var img = el.tagName === 'IMG' ? el : el.querySelector('img');
+    var tl = gsap.timeline({ scrollTrigger: { trigger: el, start: 'top 90%', once: true } });
+    tl.fromTo(el, { clipPath: 'inset(100% 0% 0% 0%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.3, ease: 'expo.inOut', delay: (el.closest('.rail') ? (i % 7) * 0.07 : 0) });
+    if (img && img !== el) tl.from(img, { scale: 1.3, duration: 1.6, ease: EASE }, 0);
+  });
+
+  /* ---- Big numbers ---- */
+  if (below(document.querySelector('.team .big'))) {
+    gsap.from('.team .big', { yPercent: 40, opacity: 0, duration: 1.4, ease: EASE, scrollTrigger: { trigger: '.team', start: 'top 75%', once: true } });
+  }
+  document.querySelectorAll('.numbers .n').forEach(function(el){
+    var txt = el.firstChild && el.firstChild.nodeType === 3 ? el.firstChild : null; if (!txt) return;
+    var target = parseInt(txt.textContent, 10); if (isNaN(target)) return;
+    var o = { v: 0 }; txt.textContent = '0';
+    gsap.to(o, { v: target, duration: 1.6, ease: EASE, scrollTrigger: { trigger: el, start: 'top 88%', once: true }, onUpdate: function(){ txt.textContent = Math.round(o.v); } });
+  });
+
+  /* ---- Reveal paragraph: words light up as you read ---- */
+  ScrollTrigger.create({
+    trigger: rt, start: 'top 80%', end: 'bottom 45%', scrub: true,
+    onUpdate: function(self){ var n = Math.round(self.progress * words.length); words.forEach(function(w, i){ w.classList.toggle('on', i < n); }); }
+  });
+
+  /* ---- Parallax: floats and ghost words drift at their own speeds ---- */
+  [['.intro .f1', -70], ['.intro .f2', -130], ['.intro .f3', -40]].forEach(function(p){
+    gsap.to(p[0], { y: p[1], ease: 'none', scrollTrigger: { trigger: '.intro', start: 'top bottom', end: 'bottom top', scrub: true } });
+  });
+  gsap.fromTo('.intro .ghost', { xPercent: 6 }, { xPercent: -8, ease: 'none', scrollTrigger: { trigger: '.intro', start: 'top bottom', end: 'bottom top', scrub: true } });
+  gsap.fromTo('.book .ghost', { xPercent: 10 }, { xPercent: -10, ease: 'none', scrollTrigger: { trigger: '.book', start: 'top bottom', end: 'bottom top', scrub: true } });
+  gsap.fromTo('footer .mark .logo-img', { yPercent: 40 }, { yPercent: 0, ease: 'none', scrollTrigger: { trigger: 'footer .mark', start: 'top bottom', end: 'bottom bottom', scrub: true } });
+
+  /* ---- Process cards fold under the next one ---- */
+  var steps = document.querySelectorAll('.step');
+  steps.forEach(function(st, i){
+    var next = steps[i + 1]; if (!next) return;
+    var top = parseFloat(getComputedStyle(next).top) || 96;
+    gsap.to(st, { scale: 0.95, filter: 'brightness(.95)', ease: 'none', scrollTrigger: { trigger: next, start: 'top ' + (top + 260) + 'px', end: 'top ' + top + 'px', scrub: true } });
+  });
+
+  /* ---- Service photos drift inside their frames ---- */
+  document.querySelectorAll('.cell .pic img').forEach(function(img){
+    gsap.fromTo(img, { yPercent: -6 }, { yPercent: 6, ease: 'none', scrollTrigger: { trigger: img.parentNode, start: 'top bottom', end: 'bottom top', scrub: true } });
+  });
+
+  /* ---- Custom cursor (mouse and trackpad only) ---- */
+  var finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  if (finePointer) {
+    var dot = document.createElement('div'); dot.className = 'c-dot'; dot.setAttribute('aria-hidden', 'true');
+    var ring = document.createElement('div'); ring.className = 'c-ring'; ring.setAttribute('aria-hidden', 'true');
+    var ringLabel = document.createElement('span'); ring.appendChild(ringLabel);
+    document.body.appendChild(ring); document.body.appendChild(dot);
+    gsap.set([dot, ring], { xPercent: -50, yPercent: -50, x: -100, y: -100 });
+    var dotX = gsap.quickTo(dot, 'x', { duration: 0.12, ease: 'power3.out' }), dotY = gsap.quickTo(dot, 'y', { duration: 0.12, ease: 'power3.out' });
+    var ringX = gsap.quickTo(ring, 'x', { duration: 0.55, ease: 'expo.out' }), ringY = gsap.quickTo(ring, 'y', { duration: 0.55, ease: 'expo.out' });
+    var started = false;
+    window.addEventListener('mousemove', function(e){
+      if (!started) { gsap.set([dot, ring], { x: e.clientX, y: e.clientY }); started = true; document.documentElement.classList.add('has-cursor'); }
+      dotX(e.clientX); dotY(e.clientY); ringX(e.clientX); ringY(e.clientY);
+    }, { passive: true });
+    document.addEventListener('mouseleave', function(){ document.documentElement.classList.remove('has-cursor'); started = false; });
+
+    var state = '';
+    function setState(next, label){
+      var key = next + '|' + (label || '');
+      if (key === state) return; state = key;
+      ring.classList.toggle('fill', next === 'link' || next === 'label');
+      ring.classList.toggle('label', next === 'label');
+      ring.classList.toggle('off', next === 'field');
+      dot.classList.toggle('hide', next === 'link' || next === 'label');
+      dot.classList.toggle('off', next === 'field');
+      if (label) ringLabel.textContent = label;
+      gsap.to(ring, { scale: next === 'label' ? 2.1 : next === 'link' ? 1.45 : next === 'media' ? 1.9 : 1, duration: 0.5, ease: 'expo.out', overwrite: 'auto' });
+    }
+    document.addEventListener('mouseover', function(e){
+      var t = e.target;
+      if (t.closest('input, select, textarea')) return setState('field');
+      var wa = t.closest('a[href*="wa.me"]');
+      if (wa) return setState('label', 'Chat');
+      if (t.closest('a, button, [role="button"]')) return setState('link');
+      if (t.closest('.feed .rail figure')) return setState('label', 'Drag');
+      if (t.closest('.cell .pic, .intro .float, footer .photo')) return setState('media');
+      setState('idle');
+    });
+    window.addEventListener('mousedown', function(){ gsap.to(ring, { scale: '-=0.2', duration: 0.2, ease: 'power2.out' }); });
+    window.addEventListener('mouseup', function(){ var s0 = state; state = ''; var parts = s0.split('|'); setState(parts[0] || 'idle', parts[1]); });
+
+    /* the feed rail drags with the mouse, since the cursor says so */
+    var dragging = false, startX = 0, startScroll = 0, moved = 0;
+    rail.addEventListener('mousedown', function(e){ dragging = true; moved = 0; startX = e.clientX; startScroll = rail.scrollLeft; rail.style.scrollSnapType = 'none'; e.preventDefault(); });
+    window.addEventListener('mousemove', function(e){ if (!dragging) return; var dx = e.clientX - startX; moved = Math.max(moved, Math.abs(dx)); rail.scrollLeft = startScroll - dx; });
+    window.addEventListener('mouseup', function(){ if (!dragging) return; dragging = false; rail.style.scrollSnapType = ''; });
+    rail.addEventListener('click', function(e){ if (moved > 6) { e.preventDefault(); e.stopPropagation(); } }, true);
+
+    /* ---- Magnetic buttons: the button leans toward the pointer, its arrow leans further ---- */
+    document.querySelectorAll('.btn, .feed .arrows button').forEach(function(el){
+      var xTo = gsap.quickTo(el, 'x', { duration: 0.7, ease: 'expo.out' }), yTo = gsap.quickTo(el, 'y', { duration: 0.7, ease: 'expo.out' });
+      var ar = el.querySelector('.ar');
+      var aX = ar ? gsap.quickTo(ar, 'x', { duration: 0.7, ease: 'expo.out' }) : null, aY = ar ? gsap.quickTo(ar, 'y', { duration: 0.7, ease: 'expo.out' }) : null;
+      el.addEventListener('mousemove', function(e){
+        var r = el.getBoundingClientRect();
+        var dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+        xTo(dx * 0.22); yTo(dy * 0.38);
+        if (aX) { aX(dx * 0.08); aY(dy * 0.12); }
+      });
+      el.addEventListener('mouseleave', function(){ xTo(0); yTo(0); if (aX) { aX(0); aY(0); } });
+    });
+  }
+
+  window.addEventListener('load', function(){ ScrollTrigger.refresh(); });
+})();
+</script>
+</body>
+</html>
