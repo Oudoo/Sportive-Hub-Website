@@ -1,0 +1,133 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useRef, useState, type FormEvent } from "react";
+import { api, ApiError } from "@/components/api";
+import { Alert, Button, Field, Input, Select, Textarea } from "@/components/ui";
+import { BRANCH_LABELS, SESSION_TYPE_LABELS } from "@/lib/format";
+
+export type PatientOption = { id: string; fullName: string; email: string };
+
+/** Local date-time string for the input's default: the next full hour. */
+function nextHourLocal(): string {
+  const d = new Date();
+  d.setMinutes(0, 0, 0);
+  d.setHours(d.getHours() + 1);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** Posts to /api/admin/sessions and refreshes the list on success. */
+export function AddSessionForm({ patients }: { patients: PatientOption[] }) {
+  const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<ApiError | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPending(true);
+    setError(null);
+    setSuccess(null);
+    const form = new FormData(event.currentTarget);
+    const startsAtLocal = String(form.get("startsAt") ?? "");
+
+    try {
+      const session = await api<{ patient: { fullName: string } }>("/api/admin/sessions", {
+        method: "POST",
+        body: {
+          patientId: form.get("patientId"),
+          type: form.get("type"),
+          branch: form.get("branch"),
+          title: form.get("title"),
+          // The input gives local clinic time; send it as an ISO instant (UTC).
+          startsAt: startsAtLocal ? new Date(startsAtLocal).toISOString() : "",
+          durationMinutes: form.get("durationMinutes"),
+          practitioner: form.get("practitioner"),
+          notes: form.get("notes"),
+          isComplimentary: form.get("isComplimentary") === "on",
+        },
+      });
+      setSuccess(`Session added for ${session.patient.fullName}.`);
+      formRef.current?.reset();
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof ApiError ? err : new ApiError(0, "Could not add the session. Try again."));
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <form ref={formRef} onSubmit={onSubmit} className="grid gap-4">
+      {error && error.issues.length === 0 && <Alert tone="bad">{error.message}</Alert>}
+      {success && <Alert tone="good">{success}</Alert>}
+
+      <Field label="Patient" htmlFor="patientId" error={error?.field("patientId")}>
+        <Select id="patientId" name="patientId" required defaultValue="">
+          <option value="" disabled>
+            Choose a patient…
+          </option>
+          {patients.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.fullName} · {p.email}
+            </option>
+          ))}
+        </Select>
+      </Field>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Service" htmlFor="type" error={error?.field("type")}>
+          <Select id="type" name="type" defaultValue="PHYSIOTHERAPY">
+            {Object.entries(SESSION_TYPE_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="Branch" htmlFor="branch" error={error?.field("branch")}>
+          <Select id="branch" name="branch" defaultValue="SHEIKH_ZAYED">
+            {Object.entries(BRANCH_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Starts at" htmlFor="startsAt" error={error?.field("startsAt")}>
+          <Input id="startsAt" name="startsAt" type="datetime-local" defaultValue={nextHourLocal()} required />
+        </Field>
+        <Field label="Duration (minutes)" htmlFor="durationMinutes" error={error?.field("durationMinutes")}>
+          <Input id="durationMinutes" name="durationMinutes" type="number" min={10} max={480} step={5} defaultValue={60} />
+        </Field>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Title" htmlFor="title" error={error?.field("title")} hint="Optional, e.g. “Knee rehab, week 2”.">
+          <Input id="title" name="title" maxLength={120} />
+        </Field>
+        <Field label="Practitioner" htmlFor="practitioner" error={error?.field("practitioner")}>
+          <Input id="practitioner" name="practitioner" maxLength={120} placeholder="Therapist, coach or nurse" />
+        </Field>
+      </div>
+
+      <Field label="Notes" htmlFor="notes" error={error?.field("notes")}>
+        <Textarea id="notes" name="notes" maxLength={2000} />
+      </Field>
+
+      <label className="flex items-center gap-2 text-sm">
+        <input type="checkbox" name="isComplimentary" className="size-4 accent-olive" />
+        Complimentary session (booked with a redeemed reward)
+      </label>
+
+      <Button type="submit" disabled={pending} className="justify-self-start">
+        {pending ? "Adding…" : "Add session"}
+      </Button>
+    </form>
+  );
+}

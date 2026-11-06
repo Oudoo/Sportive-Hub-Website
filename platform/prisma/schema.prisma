@@ -1,0 +1,166 @@
+// Sportive Hub platform: database schema (Prisma 7, MySQL/MariaDB).
+// Connection URL comes from prisma7.config.ts (DATABASE_URL), not from this file.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  ADMIN
+  PATIENT
+}
+
+/// The two clinic branches named on the website.
+enum Branch {
+  SHEIKH_ZAYED
+  ALMAZA_BAY
+}
+
+/// Mirrors the services listed on sportive-hub.com.
+enum SessionType {
+  PHYSIOTHERAPY
+  EMS
+  IV_THERAPY
+  CUPPING
+  LYMPHATIC_DRAINAGE
+  WOMENS_HEALTH
+  PSYCHIATRY
+  NUTRITION
+  OTHER
+}
+
+enum SessionStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum UpdateKind {
+  ANNOUNCEMENT
+  PLATFORM_UPDATE
+  HEALTH_TIP
+}
+
+/// Why points moved. Every change to a balance has exactly one of these.
+enum LoyaltyReason {
+  REFERRAL_BONUS    // to the referrer: a new patient signed up with their code
+  WELCOME_BONUS     // to the new patient: they signed up with a valid code
+  SESSION_ATTENDED  // a session was marked COMPLETED
+  MANUAL_ADJUSTMENT // an admin added or deducted points by hand
+  REWARD_REDEMPTION // points spent on a reward (e.g. a free session)
+}
+
+// ---------------------------------------------------------------------------
+// Models
+// ---------------------------------------------------------------------------
+
+/// One table for both roles. Admins are staff; patients are clients.
+model User {
+  id           String  @id @default(cuid())
+  email        String  @unique @db.VarChar(255)
+  passwordHash String  @db.VarChar(255) // bcrypt, never returned by the API
+  fullName     String  @db.VarChar(120)
+  phone        String? @db.VarChar(32)
+  role         Role    @default(PATIENT)
+  isActive     Boolean @default(true) // false = cannot sign in; records are kept
+
+  // --- Referral programme -------------------------------------------------
+  /// Shareable code in the form SPORT-XXXXXX. Only patients get one; admins have null.
+  referralCode String? @unique @db.VarChar(16)
+  /// The patient whose code was used when this account was created.
+  referredById String?
+  referredBy   User?   @relation("Referrals", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals    User[]  @relation("Referrals")
+
+  // --- Loyalty ------------------------------------------------------------
+  /// Current spendable balance. Cached for fast reads; LoyaltyTransaction rows are the source of truth.
+  loyaltyPoints  Int @default(0)
+  /// Points ever earned (positive transactions only). Drives the tier and never decreases.
+  lifetimePoints Int @default(0)
+
+  sessions            Session[]            @relation("PatientSessions")
+  loyaltyTransactions LoyaltyTransaction[] @relation("TransactionUser")
+  actedTransactions   LoyaltyTransaction[] @relation("TransactionActor")
+  authoredUpdates     Update[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([referredById])
+  @@index([role, createdAt])
+}
+
+/// A therapy, training or treatment appointment for one patient, created by staff.
+model Session {
+  id        String @id @default(cuid())
+  patientId String
+  patient   User   @relation("PatientSessions", fields: [patientId], references: [id], onDelete: Cascade)
+
+  type            SessionType
+  branch          Branch        @default(SHEIKH_ZAYED)
+  title           String?       @db.VarChar(120) // optional label, e.g. "Knee rehab, week 2"
+  startsAt        DateTime
+  durationMinutes Int           @default(60)
+  practitioner    String?       @db.VarChar(120) // therapist, coach or nurse
+  status          SessionStatus @default(SCHEDULED)
+  notes           String?       @db.Text
+  /// True when the session was booked with a redeemed reward.
+  isComplimentary Boolean       @default(false)
+  /// Set the first time the session is marked COMPLETED, so attendance points are granted once.
+  pointsAwardedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patientId, startsAt])
+  @@index([status, startsAt])
+}
+
+/// Announcements, platform updates and health tips posted by staff.
+model Update {
+  id    String     @id @default(cuid())
+  kind  UpdateKind @default(ANNOUNCEMENT)
+  title String     @db.VarChar(160)
+  body  String     @db.Text
+  /// Null means draft. Only published updates are visible to patients and the public API.
+  publishedAt DateTime?
+  authorId    String?
+  author      User?     @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([publishedAt])
+}
+
+/// Append-only audit trail of every points change. Balances are derived from these rows.
+model LoyaltyTransaction {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation("TransactionUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Positive = earned, negative = spent or deducted. Never zero.
+  points      Int
+  reason      LoyaltyReason
+  note        String?       @db.VarChar(255)
+  /// Id of the related record: the session, the referred user, etc.
+  referenceId String?       @db.VarChar(32)
+  /// The admin who made a manual change. Null when the system awarded the points.
+  actorId     String?
+  actor       User?         @relation("TransactionActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([reason])
+}

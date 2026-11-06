@@ -1,0 +1,32 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import type { ReactNode } from "react";
+import { LogoutButton } from "@/components/LogoutButton";
+import { getSessionUser } from "@/lib/auth/session";
+
+/** Patient portal frame. Admins can open it too, to see what patients see. */
+export default async function PortalLayout({ children }: { children: ReactNode }) {
+  const user = await getSessionUser();
+  if (!user) redirect("/login?next=/portal");
+
+  return (
+    <div className="flex min-h-screen flex-col">
+      <header className="flex items-center justify-between gap-4 border-b border-charcoal/15 px-4 py-4 md:px-8">
+        <Link href="/portal" className="flex items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
+          <img src="/logo.png" alt="Sportive Hub" className="h-8 w-auto" />
+        </Link>
+        <div className="flex items-center gap-3 text-sm">
+          {user.role === "ADMIN" && (
+            <Link href="/admin" className="text-olive underline underline-offset-4">
+              Admin
+            </Link>
+          )}
+          <span className="hidden text-olive sm:inline">{user.fullName}</span>
+          <LogoutButton />
+        </div>
+      </header>
+      <main className="mx-auto w-full max-w-4xl px-4 py-8 md:px-8">{children}</main>
+    </div>
+  );
+}

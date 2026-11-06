@@ -2,7 +2,10 @@
 
 The website for Sportive Hub, Movement Lab, a movement and recovery clinic in Sheikh Zayed. Live at https://sportive-hub.com, hosted on Hostinger.
 
-Plain HTML, CSS and JavaScript: no framework, no build step, no npm. What is in `public_html/` is exactly what is on the server.
+Two separate things live in this repository:
+
+- **`public_html/`**: the public website. Plain HTML, CSS and JavaScript: no framework, no build step, no npm. What is in it is exactly what is on the server. The rest of this file is about it.
+- **`platform/`**: the patient portal, admin dashboard and API (Next.js, Prisma, MySQL). It is a separate app with its own README, dependencies and Hostinger website. See [`platform/README.md`](platform/README.md).
 
 ## Pages
 
@@ -23,6 +26,7 @@ public_html/            everything in here goes live; nothing outside it does
   favicon.ico           at the root because browsers ask for it there
   apple-touch-icon.png  at the root because iPhones ask for it there
   assets/               photos, logo, icons, link-preview image, exercises.js
+platform/               the portal, dashboard and API: a Node.js app deployed separately (see its README)
 README.md
 ```
 
@@ -77,7 +81,7 @@ The site is the Hostinger website `sportive-hub.com`. Deploying replaces everyth
 ## Working on the site
 
 - Work on a branch and open a pull request into `main`. Keep `main` matching the live site.
-- Keep it build-free: no npm packages or bundlers unless the team agrees to add a build step.
+- Keep `public_html/` build-free: no npm packages or bundlers there. Anything that needs a build belongs in `platform/`.
 - Keep file names lowercase. The server is case-sensitive.
 - Put new images in `public_html/assets/` and compress them first. The current photos are about 25 to 250 KB at 720 to 1800 px wide.
 
