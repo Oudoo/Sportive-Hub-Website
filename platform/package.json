@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build --webpack",
-    "build:hostinger": "prisma generate && prisma migrate deploy && prisma db seed && next build --webpack",
+    "build:hostinger": "prisma generate && prisma migrate deploy && prisma db seed && LOW_RESOURCE_BUILD=1 TOKIO_WORKER_THREADS=2 RAYON_NUM_THREADS=2 UV_THREADPOOL_SIZE=2 next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "db:migrate": "prisma migrate dev",

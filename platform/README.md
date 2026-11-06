@@ -221,3 +221,5 @@ hPanel → Node.js → Runtime logs shows only what the app writes with `console
 ### Build notes
 
 Production builds use `next build --webpack`. Hostinger's build environment could not run the helper process Turbopack spawns for CSS transforms, so Tailwind runs through PostCSS (`postcss.config.mjs`) and webpack bundles the app. `next dev` still uses Turbopack. Every page is rendered per request (`connection()` in the root layout) so the CSP nonce is fresh on each response.
+
+The build container also has a low thread limit: once the app grew to 66 routes, a build died with "OS can't spawn worker thread (os error 11)" because Next forks one static-generation worker per CPU core of the host, each loading the SWC native binding with its own thread pools. `build:hostinger` therefore runs `next build` with `LOW_RESOURCE_BUILD=1` (a single worker, see `next.config.ts`) and caps the native pools (`TOKIO_WORKER_THREADS`, `RAYON_NUM_THREADS`, `UV_THREADPOOL_SIZE`). It is slower but fits. Local `npm run build` is unaffected.

@@ -14,6 +14,15 @@ const securityHeaders = [
   { key: "X-DNS-Prefetch-Control", value: "off" },
 ];
 
+/**
+ * Hostinger's build container allows only a small number of threads. By default Next
+ * forks one static-generation worker per CPU core of the build host, and each loads the
+ * SWC native binding with its own thread pools, which blew past that limit. The Hostinger
+ * build script sets LOW_RESOURCE_BUILD=1 (plus TOKIO/RAYON/UV thread caps) to build with
+ * a single worker instead.
+ */
+const lowResourceBuild = process.env.LOW_RESOURCE_BUILD === "1";
+
 const nextConfig: NextConfig = {
   // Everything here is behind a login and rendered per request, so the classic
   // dynamic-rendering model is used rather than Cache Components.
@@ -21,6 +30,8 @@ const nextConfig: NextConfig = {
 
   // Do not advertise the framework in responses.
   poweredByHeader: false,
+
+  ...(lowResourceBuild ? { experimental: { cpus: 1 } } : {}),
 
   async headers() {
     return [
