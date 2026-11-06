@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Badge, Card, Empty, ProgressBar, Table, Td, Th } from "@/components/ui";
 import { getSessionUser } from "@/lib/auth/session";
-import { BRANCH_LABELS, LOYALTY_REASON_LABELS, SESSION_TYPE_LABELS, TIER_TONE, UPDATE_KIND_LABELS, formatDate, formatDateTime, formatPoints } from "@/lib/format";
+import { BRANCH_LABELS, LOYALTY_REASON_LABELS, REFERRAL_TRIGGER_PHRASE, SESSION_TYPE_LABELS, TIER_TONE, UPDATE_KIND_LABELS, formatDate, formatDateTime, formatPoints } from "@/lib/format";
 import { getPortalData } from "@/lib/services/portal";
 
 export const metadata: Metadata = { title: "My portal" };
@@ -51,8 +51,7 @@ export default async function PortalPage() {
               You earn <strong className="text-charcoal">{p.pointsPerSession} points</strong> for every session you attend.
             </li>
             <li>
-              Invite a friend: they get {p.welcomePoints} points, you get <strong className="text-charcoal">{p.referralPoints}</strong>{" "}
-              {p.referralTrigger === "FIRST_SESSION" ? "after their first session" : "when they sign up"}.
+              Invite a friend: they get {p.welcomePoints} points, you get <strong className="text-charcoal">{p.referralPoints}</strong> {REFERRAL_TRIGGER_PHRASE[p.referralTrigger]}.
             </li>
           </ul>
           <div className="mt-4 flex flex-wrap gap-2">

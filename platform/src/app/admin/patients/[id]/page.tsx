@@ -8,11 +8,13 @@ import {
   LOYALTY_REASON_LABELS,
   REDEMPTION_STATUS_LABELS,
   REDEMPTION_STATUS_TONE,
+  REFERRAL_PENDING_HINT,
   SESSION_STATUS_LABELS,
   SESSION_TYPE_LABELS,
   TIER_TONE,
   formatDate,
   formatDateTime,
+  formatEgp,
   formatPoints,
 } from "@/lib/format";
 import { HttpError } from "@/lib/http";
@@ -127,7 +129,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
                       {r.fullName}
                     </Link>
                     <span className="flex items-center gap-2 text-olive">
-                      <Badge tone={r.referralQualifiedAt ? "good" : "warn"}>{r.referralQualifiedAt ? "Qualified" : `${r._count.sessions} sessions · pending`}</Badge>
+                      <Badge tone={r.referralQualifiedAt ? "good" : "warn"}>{r.referralQualifiedAt ? "Qualified" : REFERRAL_PENDING_HINT[settings.referralTrigger]}</Badge>
                       {formatDate(r.createdAt)}
                     </span>
                   </li>
@@ -148,6 +150,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
                     <Th>When</Th>
                     <Th>Service</Th>
                     <Th>Status</Th>
+                    <Th>Payment</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -160,6 +163,18 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
                       </Td>
                       <Td>
                         <Badge tone={STATUS_TONE[s.status]}>{SESSION_STATUS_LABELS[s.status]}</Badge>
+                      </Td>
+                      <Td>
+                        {s.isComplimentary ? (
+                          <Badge tone="good">Reward</Badge>
+                        ) : s.paidAt ? (
+                          <>
+                            <Badge tone="good">Paid</Badge>
+                            {s.amountPaid !== null && <div className="text-xs text-olive">{formatEgp(s.amountPaid)}</div>}
+                          </>
+                        ) : (
+                          <Badge tone="warn">Not paid</Badge>
+                        )}
                       </Td>
                     </tr>
                   ))}

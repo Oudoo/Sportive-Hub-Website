@@ -1,17 +1,22 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
+import { searchUserIds } from "@/lib/search";
+import { ACTIONS } from "@/lib/security/audit";
 import type { auditQuerySchema } from "@/lib/validation";
 import type { z } from "zod";
 
 export type AuditQuery = z.infer<typeof auditQuerySchema>;
 
-/** The activity page: newest first, filterable by action, actor and free text. */
+/** The activity page: newest first, filterable by action (exact name or "auth." prefix), actor and free text. */
 export async function listAuditLogs(query: AuditQuery) {
   const q = query.q?.trim();
+  // Actions are a fixed vocabulary, so a prefix filter is an exact list, not a LIKE.
+  const actions = query.action ? Object.keys(ACTIONS).filter((name) => name === query.action || name.startsWith(query.action!)) : null;
+  const actorIds = q ? await searchUserIds(q) : [];
   const where: Prisma.AuditLogWhereInput = {
-    ...(query.action ? { action: { startsWith: query.action } } : {}),
+    ...(actions ? { action: { in: actions.length ? actions : [query.action!] } } : {}),
     ...(query.actorId ? { actorId: query.actorId } : {}),
-    ...(q ? { OR: [{ targetId: q }, { ip: q }, { actor: { fullName: { contains: q } } }, { actor: { email: { contains: q } } }] } : {}),
+    ...(q ? { OR: [{ targetId: q }, { ip: q }, { actorId: { in: actorIds } }] } : {}),
   };
   const [items, total] = await prisma.$transaction([
     prisma.auditLog.findMany({

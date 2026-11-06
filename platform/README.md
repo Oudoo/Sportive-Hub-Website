@@ -101,7 +101,7 @@ Other scripts: `npm run build` (production build), `npm run lint`, `npm run type
 
 - **User**: both roles in one table (`role` = `ADMIN` | `PATIENT`). Patients get a unique `referralCode` and may have `referredById`, `referralQualifiedAt` (when their referrer was paid) and `referralClicks`. `loyaltyPoints` is the spendable balance, `lifetimePoints` what was ever earned (drives the tier). Security columns: `sessionVersion`, `failedLogins`, `lockedUntil`, `totpSecret` (encrypted), `totpEnabledAt`, `lastLoginAt`. `externalSource` + `externalId` identify the same person in another system. `passwordHash` and `totpSecret` never leave the server.
 - **RecoveryCode**: hashed one-time codes for two-factor sign-in.
-- **Session**: an appointment: `type`, `branch`, `startsAt`, `durationMinutes`, `practitioner`, `status`, `notes`, `isComplimentary`, `pointsAwardedAt` (set once attendance points were paid), `externalSource` + `externalId` (so integrations can re-send without duplicating).
+- **Session**: an appointment: `type`, `branch`, `startsAt`, `durationMinutes`, `practitioner`, `status`, `notes`, `isComplimentary`, `pointsAwardedAt` (set once attendance points were paid), `paidAt` / `amountPaid` / `paymentMethod` (the payment record; a referred patient's first paid session pays their referrer), `externalSource` + `externalId` (so integrations can re-send without duplicating).
 - **LoyaltySettings**: one row with the programme's numbers (see below).
 - **Reward**: catalogue entry: `kind`, `value`, `cost`, `minTier`, `stock` (null = unlimited), `isActive`, `sortOrder`.
 - **Redemption**: a claimed reward with its voucher `code` (RW-XXXXXXXX), `status` PENDING → FULFILLED | CANCELLED, who handled it.
@@ -126,7 +126,7 @@ Everything is configured under **Admin → Loyalty → Settings** (table `Loyalt
 | A redemption is cancelled | +cost back | `REDEMPTION_REFUND` |
 
 - **Tiers** by lifetime points: Bronze (0), Silver (300, +25% on session points), Gold (800, +50%). Spending never lowers a tier. Thresholds and bonuses are settings.
-- **Referral trigger**: by default the referrer is paid when the friend attends their **first completed session** (`FIRST_SESSION`), so fake sign-ups earn nothing; it can be switched to pay at registration. The welcome bonus is always paid at sign-up.
+- **Referral trigger**: by default the referrer is paid when the friend **pays for their first session** (`FIRST_PAYMENT`), so fake sign-ups and no-shows earn nothing. Staff record the payment from Sessions → **Mark as paid** (amount and method optional), or a booking system sends `paid: true`; the "To be paid" filter lists what is still open. The trigger can be switched to the first attended session or to registration. The welcome bonus is always paid at sign-up. Removing a payment record never takes a referral bonus back.
 - **Promotion**: a label, a multiplier (e.g. 200% = double points) and an end date; applies to session points while it runs.
 - **Rewards & vouchers**: patients redeem in the portal and get a voucher code to show at the desk (status PENDING); staff fulfil or cancel it under Loyalty → Redemptions. Staff and integrations redeeming on a patient's behalf fulfil immediately. Cancelling refunds the points and restores stock. Rewards can be tier-locked and stock-limited.
 - **Campaigns**: award N points to a segment (everyone, Silver+, Gold, active in 30/90 days, inactive 90 days) in one transaction.
@@ -160,8 +160,8 @@ Integration API (`/api/v1`, `Authorization: Bearer shk_live_...`): patients (lis
 
 - **API keys**: Admin → Integrations. Each key has scopes (`patients:read`, `sessions:write`, …), an optional expiry, and can be revoked. Only a SHA-256 hash is stored; the key is shown once.
 - **Idempotent sync**: send `externalSource` (e.g. `clinicminds`) and `externalId` with patients and sessions; re-sending updates instead of duplicating. Records can be addressed as `ext:<source>:<id>`.
-- **Completing a visit** (`status: "COMPLETED"`) awards the points and pays the referrer on a first visit, exactly as the dashboard does.
-- **Webhooks**: HTTPS endpoints receive signed JSON (`X-SportiveHub-Signature: t=…,v1=<HMAC-SHA256>`), three attempts with backoff, delivery log and retry. Events: `patient.created/updated`, `session.created/updated/completed`, `loyalty.points_changed`, `referral.qualified`, `redemption.created/fulfilled/cancelled`, `update.published`, `webhook.test`. Endpoints must be public HTTPS (no private addresses).
+- **Completing a visit** (`status: "COMPLETED"`) awards the points; **recording the payment** (`paid: true`, optionally `amountPaid` and `paymentMethod`) pays the referrer on a first paid session, exactly as the dashboard does.
+- **Webhooks**: HTTPS endpoints receive signed JSON (`X-SportiveHub-Signature: t=…,v1=<HMAC-SHA256>`), three attempts with backoff, delivery log and retry. Events: `patient.created/updated`, `session.created/updated/completed/paid`, `loyalty.points_changed`, `referral.qualified`, `redemption.created/fulfilled/cancelled`, `update.published`, `webhook.test`. Endpoints must be public HTTPS (no private addresses).
 - **ClinicMind**: the dashboard's Integrations page has the step-by-step mapping (their Zapier triggers or Triggers & Actions API → our `/patients` and `/sessions` calls).
 
 ## Installable app (PWA)

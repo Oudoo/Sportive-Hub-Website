@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, type FormEvent } from "react";
 import { api, ApiError } from "@/components/api";
 import { Alert, Button, Field, Input, Select, Textarea } from "@/components/ui";
-import { BRANCH_LABELS, SESSION_TYPE_LABELS } from "@/lib/format";
+import { BRANCH_LABELS, PAYMENT_METHOD_LABELS, SESSION_TYPE_LABELS } from "@/lib/format";
 
 export type PatientOption = { id: string; fullName: string; email: string };
 
@@ -47,6 +47,9 @@ export function AddSessionForm({ patients }: { patients: PatientOption[] }) {
           practitioner: form.get("practitioner"),
           notes: form.get("notes"),
           isComplimentary: form.get("isComplimentary") === "on",
+          paid: form.get("paid") === "on",
+          amountPaid: form.get("amountPaid"),
+          paymentMethod: form.get("paymentMethod"),
         },
       });
       setSuccess(`Session added for ${session.patient.fullName}.`);
@@ -124,6 +127,28 @@ export function AddSessionForm({ patients }: { patients: PatientOption[] }) {
         <input type="checkbox" name="isComplimentary" className="size-4 accent-olive" />
         Complimentary session (booked with a redeemed reward)
       </label>
+
+      <div className="grid gap-3 rounded-sm border border-charcoal/15 bg-white/40 p-3">
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" name="paid" className="size-4 accent-olive" />
+          Paid already
+        </label>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Amount (EGP)" htmlFor="amountPaid" error={error?.field("amountPaid")} hint="Optional">
+            <Input id="amountPaid" name="amountPaid" type="number" min={0} step={1} />
+          </Field>
+          <Field label="Method" htmlFor="paymentMethod" error={error?.field("paymentMethod")}>
+            <Select id="paymentMethod" name="paymentMethod" defaultValue="CASH">
+              {Object.entries(PAYMENT_METHOD_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        </div>
+        <p className="text-xs text-olive">Payment can also be recorded later from the list. A referred patient&apos;s first paid session is what pays their referrer.</p>
+      </div>
 
       <Button type="submit" disabled={pending} className="justify-self-start">
         {pending ? "Adding…" : "Add session"}

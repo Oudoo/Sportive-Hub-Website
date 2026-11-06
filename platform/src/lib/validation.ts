@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   Branch,
   LoyaltyReason,
+  PaymentMethod,
   RedemptionStatus,
   ReferralTrigger,
   RewardKind,
@@ -92,6 +93,16 @@ export type InviteAcceptInput = z.infer<typeof inviteAcceptSchema>;
 
 // --- Sessions ---------------------------------------------------------------
 
+/** Payment fields shared by the dashboard and the integration API. */
+const paymentFields = {
+  /** true records the payment (now, or at `paidAt`); false removes it. */
+  paid: z.boolean().optional(),
+  paidAt: z.preprocess(emptyToUndefined, z.coerce.date().optional()),
+  /** EGP, whole number. */
+  amountPaid: z.preprocess(emptyToNull, z.coerce.number().int().min(0).max(10_000_000).nullable().optional()),
+  paymentMethod: z.preprocess(emptyToNull, z.enum(PaymentMethod).nullable().optional()),
+};
+
 export const sessionCreateSchema = z.object({
   patientId: z.string().min(1, "Choose a patient"),
   type: z.enum(SessionType),
@@ -104,6 +115,7 @@ export const sessionCreateSchema = z.object({
   isComplimentary: z.boolean().default(false),
   /** Creating a session as COMPLETED awards points at once (integrations syncing past visits). */
   status: z.enum(SessionStatus).default("SCHEDULED"),
+  ...paymentFields,
 });
 export type SessionCreateInput = z.infer<typeof sessionCreateSchema>;
 
@@ -249,6 +261,8 @@ export const sessionsQuerySchema = paginationSchema.extend({
   patientId: optionalText(64),
   /** "1" limits to sessions that have not started yet. */
   upcoming: z.preprocess(emptyToUndefined, z.enum(["1", "0"]).optional()),
+  /** "1" limits to sessions still to be paid for (not cancelled, not complimentary). */
+  unpaid: z.preprocess(emptyToUndefined, z.enum(["1", "0"]).optional()),
   from: z.preprocess(emptyToUndefined, z.coerce.date().optional()),
   to: z.preprocess(emptyToUndefined, z.coerce.date().optional()),
   externalSource: optionalText(40),
@@ -320,6 +334,7 @@ export const v1SessionUpsertSchema = z
     status: z.enum(SessionStatus).default("SCHEDULED"),
     externalSource: optionalText(40),
     externalId: optionalText(120),
+    ...paymentFields,
   })
   .refine((d) => d.patientId || d.patientEmail || (d.patientExternalId && d.externalSource), {
     path: ["patientId"],

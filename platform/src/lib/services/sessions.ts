@@ -1,4 +1,4 @@
-import type { LoyaltySettings, Prisma, SessionType } from "@/generated/prisma/client";
+import type { LoyaltySettings, PaymentMethod, Prisma, SessionType } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { HttpError } from "@/lib/http";
 import { pointsPayload, sessionPayload } from "@/lib/integrations/serializers";
@@ -18,11 +18,13 @@ export type SessionsQuery = z.infer<typeof sessionsQuerySchema>;
 
 export async function listSessions(query: SessionsQuery) {
   const upcoming = query.upcoming === "1";
+  const unpaid = query.unpaid === "1";
   const where: Prisma.SessionWhereInput = {
     ...(query.status ? { status: query.status } : {}),
     ...(query.patientId ? { patientId: query.patientId } : {}),
     ...(query.externalSource ? { externalSource: query.externalSource } : {}),
     ...(upcoming ? { status: "SCHEDULED", startsAt: { gte: new Date() } } : {}),
+    ...(unpaid ? { paidAt: null, isComplimentary: false, status: { in: ["SCHEDULED", "COMPLETED"] } } : {}),
     ...(query.from || query.to ? { startsAt: { ...(query.from ? { gte: query.from } : {}), ...(query.to ? { lte: query.to } : {}) } } : {}),
   };
 
@@ -53,12 +55,13 @@ async function assertActivePatient(tx: Tx, patientId: string) {
   }
 }
 
-type CompletionResult = { points: PointsResult | null; pointsAwarded: number; referral: { referrerId: string; points: number } | null };
+type Referral = { referrerId: string; points: number } | null;
+type CompletionResult = { points: PointsResult | null; pointsAwarded: number; referral: Referral };
 
 /**
  * What happens when a session is attended: points for the patient (base x tier bonus
- * x promotion), and the referrer's bonus if this was the patient's qualifying visit.
- * Runs inside the caller's transaction.
+ * x promotion), and the referrer's bonus if the programme pays on the first attended
+ * session. Runs inside the caller's transaction.
  */
 async function completeSessionInTx(tx: Tx, input: { sessionId: string; patientId: string; settings: LoyaltySettings }): Promise<CompletionResult> {
   const patient = await tx.user.findUniqueOrThrow({ where: { id: input.patientId }, select: { lifetimePoints: true } });
@@ -82,34 +85,72 @@ async function completeSessionInTx(tx: Tx, input: { sessionId: string; patientId
   return { points, pointsAwarded: amount, referral };
 }
 
+/**
+ * What happens when a session is paid for: if the programme pays referrers on the
+ * friend's first payment (the default), this is the moment the referral counts.
+ */
+async function paySessionInTx(tx: Tx, input: { patientId: string; settings: LoyaltySettings }): Promise<Referral> {
+  return input.settings.referralTrigger === "FIRST_PAYMENT" ? qualifyReferral(tx, { patientId: input.patientId, settings: input.settings }) : null;
+}
+
+async function emitReferral(session: SessionWithPatient, referral: Referral, via: "FIRST_SESSION" | "FIRST_PAYMENT") {
+  if (!referral) return;
+  await emitEvent("referral.qualified", { referrerId: referral.referrerId, referredPatientId: session.patientId, points: referral.points, sessionId: session.id, via });
+}
+
 async function emitCompletion(session: SessionWithPatient, completion: CompletionResult) {
   await emitEvent("session.completed", { session: sessionPayload(session), pointsAwarded: completion.pointsAwarded });
   if (completion.points) await emitEvent("loyalty.points_changed", pointsPayload(session.patientId, completion.points));
-  if (completion.referral) {
-    await emitEvent("referral.qualified", { referrerId: completion.referral.referrerId, referredPatientId: session.patientId, points: completion.referral.points, sessionId: session.id });
-  }
+  await emitReferral(session, completion.referral, "FIRST_SESSION");
+}
+
+async function emitPayment(session: SessionWithPatient, referral: Referral) {
+  await emitEvent("session.paid", { session: sessionPayload(session), amountPaid: session.amountPaid, paymentMethod: session.paymentMethod });
+  await emitReferral(session, referral, "FIRST_PAYMENT");
 }
 
 type ExternalRef = { externalSource?: string; externalId?: string };
+type PaymentInput = { paid?: boolean; paidAt?: Date; amountPaid?: number | null; paymentMethod?: PaymentMethod | null };
+
+/** Turns the request's payment fields into column values. `undefined` means "leave as is". */
+function paymentData(input: PaymentInput, current: { paidAt: Date | null; isComplimentary: boolean }) {
+  const wantsPayment = input.paid === true || (input.paid === undefined && input.paidAt !== undefined);
+  if (wantsPayment && current.isComplimentary) {
+    throw new HttpError(422, "A complimentary session has no payment to record", [{ path: "paid", message: "This session was booked with a reward" }]);
+  }
+  const newlyPaid = wantsPayment && !current.paidAt;
+  return {
+    newlyPaid,
+    data: {
+      ...(input.paid === false ? { paidAt: null, amountPaid: null, paymentMethod: null } : {}),
+      ...(wantsPayment ? { paidAt: current.paidAt ?? input.paidAt ?? new Date() } : {}),
+      ...(input.amountPaid !== undefined && input.paid !== false ? { amountPaid: input.amountPaid } : {}),
+      ...(input.paymentMethod !== undefined && input.paid !== false ? { paymentMethod: input.paymentMethod } : {}),
+    },
+  };
+}
 
 export async function createSession(input: SessionCreateInput & ExternalRef, ctx: ActionContext): Promise<SessionWithPatient> {
   const settings = await getSettings();
-  const { status, ...fields } = input;
+  const { status, paid, paidAt, amountPaid, paymentMethod, ...fields } = input;
   const completes = status === "COMPLETED";
+  const payment = paymentData({ paid, paidAt, amountPaid, paymentMethod }, { paidAt: null, isComplimentary: fields.isComplimentary });
 
-  const { session, completion } = await prisma.$transaction(async (tx) => {
+  const { session, completion, referral } = await prisma.$transaction(async (tx) => {
     await assertActivePatient(tx, input.patientId);
     const created = await tx.session.create({
-      data: { ...fields, status, ...(completes ? { pointsAwardedAt: new Date() } : {}) },
+      data: { ...fields, status, ...payment.data, ...(completes ? { pointsAwardedAt: new Date() } : {}) },
       include: sessionInclude,
     });
     const completion = completes ? await completeSessionInTx(tx, { sessionId: created.id, patientId: created.patientId, settings }) : null;
-    return { session: created, completion };
+    const referral = payment.newlyPaid ? await paySessionInTx(tx, { patientId: created.patientId, settings }) : null;
+    return { session: created, completion, referral };
   });
 
-  await audit({ action: "session.created", actor: ctx.actor, target: { type: "session", id: session.id }, request: ctx.request, meta: { patientId: session.patientId, status } });
+  await audit({ action: "session.created", actor: ctx.actor, target: { type: "session", id: session.id }, request: ctx.request, meta: { patientId: session.patientId, status, paid: payment.newlyPaid } });
   await emitEvent("session.created", { session: sessionPayload(session) });
   if (completion) await emitCompletion(session, completion);
+  if (payment.newlyPaid) await emitPayment(session, referral);
   return session;
 }
 
@@ -123,14 +164,16 @@ export async function getSession(id: string): Promise<SessionWithPatient> {
  * Edits a session. Marking it COMPLETED awards attendance points to the patient,
  * once: `pointsAwardedAt` remembers that it happened, so flipping the status back
  * and forth cannot award twice (and points are not taken back on a later change).
+ * Marking it paid (`paid: true`) records the payment once and, by default, qualifies
+ * the patient's referral; removing a payment never takes a referral bonus back.
  */
 export async function updateSession(id: string, input: SessionUpdateInput & ExternalRef, ctx: ActionContext): Promise<SessionWithPatient> {
   const settings = await getSettings();
 
-  const { session, completion } = await prisma.$transaction(async (tx) => {
+  const { session, completion, payment, referral } = await prisma.$transaction(async (tx) => {
     const existing = await tx.session.findUnique({
       where: { id },
-      select: { id: true, patientId: true, status: true, pointsAwardedAt: true },
+      select: { id: true, patientId: true, status: true, pointsAwardedAt: true, paidAt: true, isComplimentary: true },
     });
     if (!existing) throw new HttpError(404, "Session not found");
 
@@ -138,9 +181,10 @@ export async function updateSession(id: string, input: SessionUpdateInput & Exte
       await assertActivePatient(tx, input.patientId);
     }
 
-    const { status, ...fields } = input;
+    const { status, paid, paidAt, amountPaid, paymentMethod, ...fields } = input;
     const shouldAward = status === "COMPLETED" && existing.status !== "COMPLETED" && !existing.pointsAwardedAt;
     const patientId = input.patientId ?? existing.patientId;
+    const payment = paymentData({ paid, paidAt, amountPaid, paymentMethod }, { paidAt: existing.paidAt, isComplimentary: fields.isComplimentary ?? existing.isComplimentary });
 
     const updated = await tx.session.update({
       where: { id },
@@ -148,16 +192,19 @@ export async function updateSession(id: string, input: SessionUpdateInput & Exte
         ...fields,
         ...(status ? { status } : {}),
         ...(shouldAward ? { pointsAwardedAt: new Date() } : {}),
+        ...payment.data,
       },
       include: sessionInclude,
     });
     const completion = shouldAward ? await completeSessionInTx(tx, { sessionId: id, patientId, settings }) : null;
-    return { session: updated, completion };
+    const referral = payment.newlyPaid ? await paySessionInTx(tx, { patientId, settings }) : null;
+    return { session: updated, completion, payment, referral };
   });
 
-  await audit({ action: "session.updated", actor: ctx.actor, target: { type: "session", id }, request: ctx.request, meta: { fields: Object.keys(input) } });
+  await audit({ action: "session.updated", actor: ctx.actor, target: { type: "session", id }, request: ctx.request, meta: { fields: Object.keys(input), ...(payment.newlyPaid ? { paid: true } : {}) } });
   await emitEvent("session.updated", { session: sessionPayload(session), changed: Object.keys(input) });
   if (completion) await emitCompletion(session, completion);
+  if (payment.newlyPaid) await emitPayment(session, referral);
   return session;
 }
 
@@ -225,6 +272,10 @@ export async function upsertExternalSession(input: V1SessionUpsertInput, ctx: Ac
     status: input.status,
     externalSource: input.externalSource,
     externalId: input.externalId,
+    paid: input.paid,
+    paidAt: input.paidAt,
+    amountPaid: input.amountPaid,
+    paymentMethod: input.paymentMethod,
   };
 
   if (existing) {

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge, Card, Empty, Stat, Table, Td, Th } from "@/components/ui";
-import { REFERRAL_TRIGGER_LABELS, formatDate } from "@/lib/format";
+import { REFERRAL_PENDING_HINT, REFERRAL_TRIGGER_LABELS, formatDate } from "@/lib/format";
 import { getReferralOverview } from "@/lib/services/referrals";
 
 export const metadata: Metadata = { title: "Referrals" };
@@ -18,7 +18,7 @@ export default async function ReferralsPage() {
         <Stat label="Link opens" value={f.clicks.toLocaleString()} hint="All patients' /r/ links" />
         <Stat label="Friends signed up" value={f.signups} hint={`${f.signupsThisMonth} this month${conversion !== null ? ` · ${conversion}% of opens` : ""}`} />
         <Stat label="Qualified" value={f.qualified} hint={`${f.qualifiedThisMonth} this month${qualifyRate !== null ? ` · ${qualifyRate}% of sign-ups` : ""}`} />
-        <Stat label="Pending" value={f.pending} hint="Signed up, no session attended yet" />
+        <Stat label="Pending" value={f.pending} hint={REFERRAL_PENDING_HINT[data.settings.referralTrigger]} />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
@@ -94,7 +94,8 @@ export default async function ReferralsPage() {
                       )}
                     </Td>
                     <Td>
-                      <Badge tone={row.referralQualifiedAt ? "good" : "warn"}>{row.referralQualifiedAt ? "Qualified" : `Pending · ${row._count.sessions} sessions`}</Badge>
+                      <Badge tone={row.referralQualifiedAt ? "good" : "warn"}>{row.referralQualifiedAt ? "Qualified" : "Pending"}</Badge>
+                      {!row.referralQualifiedAt && <div className="mt-1 text-xs text-olive">{REFERRAL_PENDING_HINT[data.settings.referralTrigger]}</div>}
                     </Td>
                     <Td className="whitespace-nowrap">{formatDate(row.createdAt)}</Td>
                   </tr>

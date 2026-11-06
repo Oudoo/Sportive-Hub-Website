@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AddSessionForm } from "@/components/admin/AddSessionForm";
+import { SessionPaymentControl } from "@/components/admin/SessionPaymentControl";
 import { SessionStatusControl } from "@/components/admin/SessionStatusControl";
 import { Badge, Card, Empty, PageTitle, Table, Td, Th } from "@/components/ui";
 import { prisma } from "@/lib/db";
-import { BRANCH_LABELS, SESSION_TYPE_LABELS, formatDateTime } from "@/lib/format";
+import { BRANCH_LABELS, REFERRAL_TRIGGER_PHRASE, SESSION_TYPE_LABELS, formatDateTime } from "@/lib/format";
+import { getSettings } from "@/lib/loyalty";
 import { listSessions } from "@/lib/services/sessions";
 import { sessionsQuerySchema } from "@/lib/validation";
 
@@ -12,6 +14,7 @@ export const metadata: Metadata = { title: "Sessions" };
 
 const FILTERS = [
   { key: "upcoming", label: "Upcoming", params: { upcoming: "1" } },
+  { key: "unpaid", label: "To be paid", params: { unpaid: "1" } },
   { key: "all", label: "All", params: {} },
   { key: "completed", label: "Completed", params: { status: "COMPLETED" } },
   { key: "cancelled", label: "Cancelled", params: { status: "CANCELLED" } },
@@ -22,22 +25,26 @@ export default async function SessionsPage({ searchParams }: { searchParams: Pro
   const parsed = sessionsQuerySchema.safeParse(raw);
   const query = parsed.success ? parsed.data : sessionsQuerySchema.parse({});
 
-  const [sessions, patients] = await Promise.all([
+  const [sessions, patients, settings] = await Promise.all([
     listSessions(query),
     prisma.user.findMany({
       where: { role: "PATIENT", isActive: true },
       select: { id: true, fullName: true, email: true },
       orderBy: { fullName: "asc" },
     }),
+    getSettings(),
   ]);
 
-  const activeFilter = query.upcoming === "1" ? "upcoming" : query.status === "COMPLETED" ? "completed" : query.status === "CANCELLED" ? "cancelled" : "all";
+  const activeFilter =
+    query.upcoming === "1" ? "upcoming" : query.unpaid === "1" ? "unpaid" : query.status === "COMPLETED" ? "completed" : query.status === "CANCELLED" ? "cancelled" : "all";
 
   return (
     <>
-      <PageTitle lede="Book, reschedule and close out therapy, training and treatment sessions.">Sessions</PageTitle>
+      <PageTitle lede={`Book, reschedule, close out and record payment for sessions. A referred patient's referrer is paid ${REFERRAL_TRIGGER_PHRASE[settings.referralTrigger]}.`}>
+        Sessions
+      </PageTitle>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <Card title="Add a session">
           <AddSessionForm patients={patients} />
         </Card>
@@ -45,7 +52,7 @@ export default async function SessionsPage({ searchParams }: { searchParams: Pro
         <Card
           title={`${sessions.total} session${sessions.total === 1 ? "" : "s"}`}
           action={
-            <nav aria-label="Filter" className="flex gap-1 text-xs">
+            <nav aria-label="Filter" className="flex flex-wrap gap-1 text-xs">
               {FILTERS.map((f) => (
                 <Link
                   key={f.key}
@@ -68,6 +75,7 @@ export default async function SessionsPage({ searchParams }: { searchParams: Pro
                   <Th>Patient</Th>
                   <Th>Service</Th>
                   <Th>Status</Th>
+                  <Th>Payment</Th>
                 </tr>
               </thead>
               <tbody>
@@ -96,6 +104,9 @@ export default async function SessionsPage({ searchParams }: { searchParams: Pro
                     </Td>
                     <Td>
                       <SessionStatusControl id={s.id} status={s.status} />
+                    </Td>
+                    <Td>
+                      <SessionPaymentControl id={s.id} paidAt={s.paidAt?.toISOString() ?? null} amountPaid={s.amountPaid} paymentMethod={s.paymentMethod} isComplimentary={s.isComplimentary} />
                     </Td>
                   </tr>
                 ))}

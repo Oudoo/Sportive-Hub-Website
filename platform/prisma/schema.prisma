@@ -69,10 +69,20 @@ enum Tier {
   GOLD
 }
 
-/// When the referrer is paid. FIRST_SESSION resists fake sign-ups: the friend has to actually come in.
+/// When the referrer is paid. FIRST_PAYMENT (the default) resists fake sign-ups: the friend
+/// has to book and pay for a first session before the referral counts.
 enum ReferralTrigger {
   REGISTRATION
   FIRST_SESSION
+  FIRST_PAYMENT
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  INSTAPAY
+  BANK_TRANSFER
+  OTHER
 }
 
 enum RewardKind {
@@ -203,6 +213,13 @@ model Session {
   /// Set the first time the session is marked COMPLETED, so attendance points are granted once.
   pointsAwardedAt DateTime?
 
+  /// When the patient paid for this session: set by staff ("Mark as paid") or by the booking
+  /// system. A referred patient's first paid session is what pays their referrer.
+  paidAt        DateTime?
+  /// What they paid, in EGP, when recorded.
+  amountPaid    Int?
+  paymentMethod PaymentMethod?
+
   /// Id of the same appointment in an external system (ClinicMind etc.), so syncs are idempotent.
   externalSource String? @db.VarChar(40)
   externalId     String? @db.VarChar(120)
@@ -213,6 +230,7 @@ model Session {
   @@unique([externalSource, externalId])
   @@index([patientId, startsAt])
   @@index([status, startsAt])
+  @@index([paidAt])
 }
 
 /// Announcements, platform updates and health tips posted by staff.
@@ -265,7 +283,7 @@ model LoyaltySettings {
   welcomePoints   Int             @default(25)
   /// To the referrer, when the friend qualifies.
   referralPoints  Int             @default(50)
-  referralTrigger ReferralTrigger @default(FIRST_SESSION)
+  referralTrigger ReferralTrigger @default(FIRST_PAYMENT)
 
   /// Lifetime points needed for each tier. Bronze starts at 0.
   silverMin Int @default(300)

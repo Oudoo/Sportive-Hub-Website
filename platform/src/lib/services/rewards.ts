@@ -5,6 +5,7 @@ import { pointsPayload, redemptionPayload } from "@/lib/integrations/serializers
 import { emitEvent } from "@/lib/integrations/webhooks";
 import { TIER_LABELS, getSettings, getTier, recordPoints, tierAtLeast } from "@/lib/loyalty";
 import { generateVoucherCode } from "@/lib/referral";
+import { searchRedemptionIdsByReward, searchUserIds } from "@/lib/search";
 import { audit } from "@/lib/security/audit";
 import { actingUserId, type ActionContext } from "@/lib/security/context";
 import type { RedemptionStatusInput, RewardCreateInput, RewardUpdateInput, redemptionsQuerySchema } from "@/lib/validation";
@@ -76,10 +77,11 @@ export type RedemptionsQuery = z.infer<typeof redemptionsQuerySchema>;
 
 export async function listRedemptions(query: RedemptionsQuery) {
   const q = query.q?.trim();
+  const [userIds, rewardMatches] = q ? await Promise.all([searchUserIds(q, { role: "PATIENT" }), searchRedemptionIdsByReward(q)]) : [[], []];
   const where: Prisma.RedemptionWhereInput = {
     ...(query.status ? { status: query.status } : {}),
     ...(query.patientId ? { userId: query.patientId } : {}),
-    ...(q ? { OR: [{ code: q.toUpperCase() }, { user: { fullName: { contains: q } } }, { user: { email: { contains: q } } }, { rewardName: { contains: q } }] } : {}),
+    ...(q ? { OR: [{ code: q.toUpperCase() }, { userId: { in: userIds } }, { id: { in: rewardMatches } }] } : {}),
   };
   const [items, total] = await prisma.$transaction([
     prisma.redemption.findMany({ where, include: redemptionInclude, orderBy: { createdAt: "desc" }, skip: (query.page - 1) * query.perPage, take: query.perPage }),

@@ -10,7 +10,7 @@ type Settings = {
   sessionPoints: number;
   welcomePoints: number;
   referralPoints: number;
-  referralTrigger: "REGISTRATION" | "FIRST_SESSION";
+  referralTrigger: "REGISTRATION" | "FIRST_SESSION" | "FIRST_PAYMENT";
   silverMin: number;
   goldMin: number;
   silverBonusPercent: number;
@@ -85,7 +85,7 @@ export function SettingsForm({ settings }: { settings: Settings }) {
             <Input id="referralPoints" name="referralPoints" type="number" min={0} defaultValue={settings.referralPoints} required />
           </Field>
         </div>
-        <Field label="Pay the referrer" htmlFor="referralTrigger" error={error?.field("referralTrigger")} hint="After the first session is the safer choice: fake sign-ups earn nothing.">
+        <Field label="Pay the referrer" htmlFor="referralTrigger" error={error?.field("referralTrigger")} hint="After the first paid session is the safest choice: fake sign-ups and no-shows earn nothing. Record payments from Sessions → Mark as paid.">
           <Select id="referralTrigger" name="referralTrigger" defaultValue={settings.referralTrigger} className="max-w-md">
             {Object.entries(REFERRAL_TRIGGER_LABELS).map(([value, label]) => (
               <option key={value} value={value}>

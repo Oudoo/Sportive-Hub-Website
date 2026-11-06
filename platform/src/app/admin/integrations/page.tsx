@@ -60,7 +60,10 @@ export default async function IntegrationsPage() {
                   <strong>Appointment scheduled or rescheduled</strong> → <Code>POST {base}/sessions</Code> with <Code>patientExternalId</Code>, the appointment id as <Code>externalId</Code>, the service name and the start time. Re-sending the same appointment updates it instead of duplicating.
                 </li>
                 <li>
-                  <strong>Appointment completed / checked out</strong> → the same call with <Code>status: &quot;COMPLETED&quot;</Code> (or <Code>PATCH {base}/sessions/ext:clinicminds:&lt;appointment id&gt;</Code>). That awards the points and, for a referred patient&apos;s first visit, pays the referrer.
+                  <strong>Appointment completed / checked out</strong> → the same call with <Code>status: &quot;COMPLETED&quot;</Code> (or <Code>PATCH {base}/sessions/ext:clinicminds:&lt;appointment id&gt;</Code>). That awards the patient&apos;s points.
+                </li>
+                <li>
+                  <strong>Payment received</strong> → the same call with <Code>paid: true</Code> (plus <Code>amountPaid</Code> and <Code>paymentMethod</Code> when known). A referred patient&apos;s first paid session is what pays their referrer, so fake sign-ups earn nothing.
                 </li>
                 <li>
                   <strong>Cancellation / no-show</strong> → the same call with <Code>status: &quot;CANCELLED&quot;</Code> or <Code>&quot;NO_SHOW&quot;</Code>.

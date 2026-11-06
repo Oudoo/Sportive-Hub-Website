@@ -113,6 +113,9 @@ async function seedDemo() {
       practitioner: "Dr. Ahmed Alaa",
       status: "COMPLETED",
       pointsAwardedAt: new Date(now - 3 * day),
+      paidAt: new Date(now - 3 * day),
+      amountPaid: 900,
+      paymentMethod: "CASH",
     },
   });
   await award(mariam.id, 10, "SESSION_ATTENDED", "Attended a session", past.id);

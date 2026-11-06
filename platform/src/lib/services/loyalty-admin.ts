@@ -1,6 +1,7 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { getSettings, invalidateSettingsCache, promoActive } from "@/lib/loyalty";
+import { searchUserIds } from "@/lib/search";
 import { audit } from "@/lib/security/audit";
 import type { ActionContext } from "@/lib/security/context";
 import type { SettingsInput, ledgerQuerySchema } from "@/lib/validation";
@@ -82,7 +83,7 @@ export async function listLedger(query: LedgerQuery) {
   const q = query.q?.trim();
   const where: Prisma.LoyaltyTransactionWhereInput = {
     ...(query.reason ? { reason: query.reason } : {}),
-    ...(q ? { user: { OR: [{ fullName: { contains: q } }, { email: { contains: q } }] } } : {}),
+    ...(q ? { userId: { in: await searchUserIds(q) } } : {}),
   };
   const [items, total] = await prisma.$transaction([
     prisma.loyaltyTransaction.findMany({

@@ -1,6 +1,7 @@
 import type {
   Branch,
   LoyaltyReason,
+  PaymentMethod,
   RedemptionStatus,
   ReferralTrigger,
   RewardKind,
@@ -115,7 +116,34 @@ export const REDEMPTION_STATUS_TONE: Record<RedemptionStatus, "info" | "good" | 
 export const REFERRAL_TRIGGER_LABELS: Record<ReferralTrigger, string> = {
   REGISTRATION: "When the friend signs up",
   FIRST_SESSION: "When the friend attends their first session",
+  FIRST_PAYMENT: "When the friend pays for their first session",
 };
+
+/** The same, as it reads mid-sentence: "you get 50 points <...>". */
+export const REFERRAL_TRIGGER_PHRASE: Record<ReferralTrigger, string> = {
+  REGISTRATION: "as soon as they sign up",
+  FIRST_SESSION: "after they attend their first session",
+  FIRST_PAYMENT: "after they pay for their first session",
+};
+
+/** What a referral is still waiting for, per trigger. */
+export const REFERRAL_PENDING_HINT: Record<ReferralTrigger, string> = {
+  REGISTRATION: "Qualifies on sign-up",
+  FIRST_SESSION: "Waiting for their first attended session",
+  FIRST_PAYMENT: "Waiting for their first paid session",
+};
+
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  CASH: "Cash",
+  CARD: "Card",
+  INSTAPAY: "InstaPay",
+  BANK_TRANSFER: "Bank transfer",
+  OTHER: "Other",
+};
+
+export function formatEgp(amount: number): string {
+  return `EGP ${amount.toLocaleString("en-EG")}`;
+}
 
 /** Who a campaign bonus goes to. Browser-safe, so the campaign form can list them. */
 export const CAMPAIGN_SEGMENTS = {

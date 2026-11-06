@@ -8,6 +8,7 @@ export const WEBHOOK_EVENTS = {
   "session.created": "A session was booked",
   "session.updated": "A session changed (time, status, practitioner, notes)",
   "session.completed": "A session was marked completed and attendance points were awarded",
+  "session.paid": "A session was marked as paid (with the amount and method when recorded)",
   "loyalty.points_changed": "A patient's balance changed, for any reason",
   "referral.qualified": "A referred patient qualified and the referrer was paid",
   "redemption.created": "A patient redeemed a reward and received a voucher code",

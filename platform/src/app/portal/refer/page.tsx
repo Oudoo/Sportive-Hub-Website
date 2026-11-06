@@ -3,10 +3,16 @@ import { redirect } from "next/navigation";
 import { ReferralCard } from "@/components/portal/ReferralCard";
 import { Badge, Card, Empty, Stat } from "@/components/ui";
 import { getSessionUser } from "@/lib/auth/session";
-import { formatDate } from "@/lib/format";
+import { REFERRAL_PENDING_HINT, REFERRAL_TRIGGER_PHRASE, formatDate } from "@/lib/format";
 import { getReferPageData } from "@/lib/services/portal";
 
 export const metadata: Metadata = { title: "Refer a friend" };
+
+const STEP_THREE: Record<string, string> = {
+  REGISTRATION: "Right away, ",
+  FIRST_SESSION: "After their first session, ",
+  FIRST_PAYMENT: "Once they have paid for their first session, ",
+};
 
 export default async function ReferPage() {
   const user = await getSessionUser();
@@ -17,8 +23,7 @@ export default async function ReferPage() {
     <>
       <h1 className="text-3xl font-medium tracking-tight md:text-4xl">Refer a friend</h1>
       <p className="mt-2 max-w-2xl text-olive">
-        Share your code. Your friend gets {data.welcomePoints} welcome points, and you get {data.referralPoints} points{" "}
-        {data.trigger === "FIRST_SESSION" ? "once they attend their first session" : "as soon as they sign up"}. No limit on how many friends you invite.
+        Share your code. Your friend gets {data.welcomePoints} welcome points, and you get {data.referralPoints} points {REFERRAL_TRIGGER_PHRASE[data.trigger]}. No limit on how many friends you invite.
       </p>
 
       <div className="mt-8 grid gap-6 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
@@ -43,7 +48,7 @@ export default async function ReferPage() {
             <li className="flex gap-3">
               <span className="font-serif text-2xl italic leading-none text-sand">3</span>
               <span>
-                {data.trigger === "FIRST_SESSION" ? "After their first session, " : "Right away, "}
+                {STEP_THREE[data.trigger] ?? ""}
                 {data.referralPoints} points land in your account. Spend them on rewards.
               </span>
             </li>
@@ -67,7 +72,7 @@ export default async function ReferPage() {
                 <span>
                   {friend.firstName} <span className="text-olive">· joined {formatDate(friend.joinedAt)}</span>
                 </span>
-                <Badge tone={friend.qualifiedAt ? "good" : "warn"}>{friend.qualifiedAt ? `+${data.referralPoints} points` : "Waiting for their first session"}</Badge>
+                <Badge tone={friend.qualifiedAt ? "good" : "warn"}>{friend.qualifiedAt ? `+${data.referralPoints} points` : REFERRAL_PENDING_HINT[data.trigger]}</Badge>
               </li>
             ))}
           </ul>

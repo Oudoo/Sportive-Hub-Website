@@ -5,6 +5,7 @@ import { patientPayload, pointsPayload } from "@/lib/integrations/serializers";
 import { emitEvent } from "@/lib/integrations/webhooks";
 import { applyReferral, getSettings, getTier, recordPoints, type Tx } from "@/lib/loyalty";
 import { generateReferralCode, normalizeReferralCode } from "@/lib/referral";
+import { searchUserIds } from "@/lib/search";
 import { audit } from "@/lib/security/audit";
 import { actingUserId, type ActionContext } from "@/lib/security/context";
 import { safeUserSelect, type SafeUser } from "@/lib/serialize";
@@ -22,20 +23,15 @@ export type PatientRow = Prisma.UserGetPayload<{ select: typeof patientRowSelect
 };
 export type PatientsQuery = z.infer<typeof patientsQuerySchema>;
 
-/** Searches name, email, phone, an exact referral code, or an external id. MySQL's default collation makes `contains` case-insensitive. */
+/** Searches name, email, phone (case-insensitive), an exact referral code, or an external id. */
 export async function listPatients(query: PatientsQuery) {
   const q = query.q?.trim();
+  const matchedIds = q ? await searchUserIds(q, { role: "PATIENT" }) : [];
   const where: Prisma.UserWhereInput = {
     role: "PATIENT",
     ...(q
       ? {
-          OR: [
-            { fullName: { contains: q } },
-            { email: { contains: q } },
-            { phone: { contains: q } },
-            { referralCode: normalizeReferralCode(q) },
-            { externalId: q },
-          ],
+          OR: [{ id: { in: matchedIds } }, { referralCode: normalizeReferralCode(q) }, { externalId: q }],
         }
       : {}),
   };
