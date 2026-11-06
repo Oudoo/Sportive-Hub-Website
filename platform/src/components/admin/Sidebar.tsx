@@ -8,12 +8,15 @@ import { InstallAppButton } from "@/components/pwa/InstallAppButton";
 const NAV: ReadonlyArray<{ href: string; label: string; exact?: boolean }> = [
   { href: "/admin", label: "Overview", exact: true },
   { href: "/admin/sessions", label: "Sessions" },
-  { href: "/admin/updates", label: "Updates" },
   { href: "/admin/patients", label: "Patients" },
+  { href: "/admin/loyalty", label: "Loyalty & referrals" },
+  { href: "/admin/updates", label: "Updates" },
+  { href: "/admin/integrations", label: "Integrations" },
+  { href: "/admin/activity", label: "Activity log" },
 ];
 
 /** Sidebar on desktop, top bar on phones. Highlights the current section. */
-export function Sidebar({ userName }: { userName: string }) {
+export function Sidebar({ userName, twoFactorOn }: { userName: string; twoFactorOn: boolean }) {
   const pathname = usePathname();
 
   return (
@@ -47,6 +50,11 @@ export function Sidebar({ userName }: { userName: string }) {
         <Link href="/account" className="truncate text-milk/85 hover:text-milk" title={userName}>
           {userName}
         </Link>
+        {!twoFactorOn && (
+          <Link href="/account#two-factor" className="text-xs text-sand hover:text-milk">
+            Turn on two-factor sign-in →
+          </Link>
+        )}
         <div className="flex flex-wrap items-center gap-x-3">
           <InstallAppButton className="px-0 text-milk/80 hover:text-milk" />
           <LogoutButton className="px-0 text-milk/80 hover:text-milk" />

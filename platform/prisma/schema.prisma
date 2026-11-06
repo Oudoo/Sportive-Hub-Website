@@ -53,11 +53,53 @@ enum UpdateKind {
 
 /// Why points moved. Every change to a balance has exactly one of these.
 enum LoyaltyReason {
-  REFERRAL_BONUS    // to the referrer: a new patient signed up with their code
+  REFERRAL_BONUS    // to the referrer: a friend they invited qualified (signed up, or attended their first session)
   WELCOME_BONUS     // to the new patient: they signed up with a valid code
   SESSION_ATTENDED  // a session was marked COMPLETED
   MANUAL_ADJUSTMENT // an admin added or deducted points by hand
-  REWARD_REDEMPTION // points spent on a reward (e.g. a free session)
+  CAMPAIGN_BONUS    // an admin awarded points to a whole segment (promotion, apology, celebration)
+  REWARD_REDEMPTION // points spent on a reward
+  REDEMPTION_REFUND // points returned because a redemption was cancelled
+}
+
+/// Membership levels, earned with lifetime points. Spending points never demotes anyone.
+enum Tier {
+  BRONZE
+  SILVER
+  GOLD
+}
+
+/// When the referrer is paid. FIRST_SESSION resists fake sign-ups: the friend has to actually come in.
+enum ReferralTrigger {
+  REGISTRATION
+  FIRST_SESSION
+}
+
+enum RewardKind {
+  FREE_SESSION
+  DISCOUNT_PERCENT
+  DISCOUNT_AMOUNT
+  PRODUCT
+  OTHER
+}
+
+enum RedemptionStatus {
+  PENDING   // points taken, voucher issued, not used yet
+  FULFILLED // handed over at the front desk
+  CANCELLED // points refunded
+}
+
+/// Who did something, for the audit log.
+enum ActorType {
+  USER
+  API_KEY
+  SYSTEM
+}
+
+enum DeliveryStatus {
+  PENDING
+  SUCCESS
+  FAILED
 }
 
 // ---------------------------------------------------------------------------
@@ -74,6 +116,19 @@ model User {
   role         Role    @default(PATIENT)
   isActive     Boolean @default(true) // false = cannot sign in; records are kept
 
+  // --- Account security ---------------------------------------------------
+  /// Bumped on password change or "sign out everywhere"; tokens carrying an older number are rejected.
+  sessionVersion Int       @default(0)
+  lastLoginAt    DateTime?
+  /// Consecutive failed sign-ins. Five in a row lock the account for a while.
+  failedLogins   Int       @default(0)
+  lockedUntil    DateTime?
+  /// TOTP secret for two-factor sign-in, encrypted with AUTH_SECRET. Null = not set up.
+  totpSecret     String?   @db.VarChar(255)
+  /// Set when the user confirmed their first code; a pending setup has a secret but no date.
+  totpEnabledAt  DateTime?
+  recoveryCodes  RecoveryCode[]
+
   // --- Referral programme -------------------------------------------------
   /// Shareable code in the form SPORT-XXXXXX. Only patients get one; admins have null.
   referralCode String? @unique @db.VarChar(16)
@@ -81,6 +136,10 @@ model User {
   referredById String?
   referredBy   User?   @relation("Referrals", fields: [referredById], references: [id], onDelete: SetNull)
   referrals    User[]  @relation("Referrals")
+  /// Set when this user's referrer was paid for them (sign-up or first attended session, per settings).
+  referralQualifiedAt DateTime?
+  /// How many times this user's /r/CODE link was opened.
+  referralClicks      Int       @default(0)
 
   // --- Loyalty ------------------------------------------------------------
   /// Current spendable balance. Cached for fast reads; LoyaltyTransaction rows are the source of truth.
@@ -88,19 +147,44 @@ model User {
   /// Points ever earned (positive transactions only). Drives the tier and never decreases.
   lifetimePoints Int @default(0)
 
+  // --- Integrations -------------------------------------------------------
+  /// Id of the same person in an external system, e.g. externalSource "clinicminds" + their client id.
+  externalSource String? @db.VarChar(40)
+  externalId     String? @db.VarChar(120)
+
   sessions            Session[]            @relation("PatientSessions")
   loyaltyTransactions LoyaltyTransaction[] @relation("TransactionUser")
   actedTransactions   LoyaltyTransaction[] @relation("TransactionActor")
   authoredUpdates     Update[]
+  redemptions         Redemption[]         @relation("RedemptionUser")
+  handledRedemptions  Redemption[]         @relation("RedemptionHandler")
+  apiKeys             ApiKey[]
+  webhooks            Webhook[]
+  auditLogs           AuditLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([externalSource, externalId])
   @@index([referredById])
   @@index([role, createdAt])
+  @@index([role, lifetimePoints])
 }
 
-/// A therapy, training or treatment appointment for one patient, created by staff.
+/// One-time backup codes for two-factor sign-in. Stored hashed; a used code keeps its row with usedAt set.
+model RecoveryCode {
+  id       String    @id @default(cuid())
+  userId   String
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash String    @db.VarChar(64)
+  usedAt   DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+/// A therapy, training or treatment appointment for one patient, created by staff or an integration.
 model Session {
   id        String @id @default(cuid())
   patientId String
@@ -119,9 +203,14 @@ model Session {
   /// Set the first time the session is marked COMPLETED, so attendance points are granted once.
   pointsAwardedAt DateTime?
 
+  /// Id of the same appointment in an external system (ClinicMind etc.), so syncs are idempotent.
+  externalSource String? @db.VarChar(40)
+  externalId     String? @db.VarChar(120)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([externalSource, externalId])
   @@index([patientId, startsAt])
   @@index([status, startsAt])
 }
@@ -153,7 +242,7 @@ model LoyaltyTransaction {
   points      Int
   reason      LoyaltyReason
   note        String?       @db.VarChar(255)
-  /// Id of the related record: the session, the referred user, etc.
+  /// Id of the related record: the session, the referred user, the redemption, etc.
   referenceId String?       @db.VarChar(32)
   /// The admin who made a manual change. Null when the system awarded the points.
   actorId     String?
@@ -162,5 +251,175 @@ model LoyaltyTransaction {
   createdAt DateTime @default(now())
 
   @@index([userId, createdAt])
-  @@index([reason])
+  @@index([reason, createdAt])
+  @@index([createdAt])
+}
+
+/// The programme's rules. One row (id 1), edited from the admin dashboard.
+model LoyaltySettings {
+  id Int @id @default(1)
+
+  /// Base points for every attended session, before tier and promotion multipliers.
+  sessionPoints   Int             @default(10)
+  /// To the new patient who signs up with a friend's code.
+  welcomePoints   Int             @default(25)
+  /// To the referrer, when the friend qualifies.
+  referralPoints  Int             @default(50)
+  referralTrigger ReferralTrigger @default(FIRST_SESSION)
+
+  /// Lifetime points needed for each tier. Bronze starts at 0.
+  silverMin Int @default(300)
+  goldMin   Int @default(800)
+  /// Extra percentage on session points for members of that tier (25 = 125%).
+  silverBonusPercent Int @default(25)
+  goldBonusPercent   Int @default(50)
+
+  /// Optional time-boxed promotion: session points are multiplied by this percentage until promoEndsAt.
+  promoLabel             String?   @db.VarChar(80)
+  promoMultiplierPercent Int       @default(100)
+  promoEndsAt            DateTime?
+
+  updatedAt DateTime @updatedAt
+}
+
+/// Something points can be spent on. Managed by admins; shown in the patient portal.
+model Reward {
+  id          String     @id @default(cuid())
+  name        String     @db.VarChar(120)
+  description String?    @db.VarChar(500)
+  kind        RewardKind @default(OTHER)
+  /// Meaning depends on kind: percent off for DISCOUNT_PERCENT, EGP for DISCOUNT_AMOUNT, otherwise unused.
+  value       Int?
+  cost        Int
+  /// Lowest tier allowed to redeem it. Lets Gold members have exclusive rewards.
+  minTier     Tier       @default(BRONZE)
+  /// Remaining units, or null for unlimited.
+  stock       Int?
+  isActive    Boolean    @default(true)
+  sortOrder   Int        @default(0)
+
+  redemptions Redemption[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+/// A reward a patient has claimed. The voucher code is what they show at the front desk.
+model Redemption {
+  id   String @id @default(cuid())
+  code String @unique @db.VarChar(16)
+
+  userId String
+  user   User   @relation("RedemptionUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  rewardId    String
+  reward      Reward           @relation(fields: [rewardId], references: [id], onDelete: Restrict)
+  /// Snapshot, so renaming a reward later does not rewrite history.
+  rewardName  String           @db.VarChar(120)
+  pointsSpent Int
+  status      RedemptionStatus @default(PENDING)
+  note        String?          @db.VarChar(255)
+
+  handledById String?
+  handledBy   User?     @relation("RedemptionHandler", fields: [handledById], references: [id], onDelete: SetNull)
+  fulfilledAt DateTime?
+  cancelledAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([userId, createdAt])
+}
+
+/// Who did what, when, from where. Written for sign-ins, admin changes and integration calls.
+model AuditLog {
+  id String @id @default(cuid())
+
+  actorType ActorType
+  actorId   String?
+  actor     User?     @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  /// Set when actorType is API_KEY.
+  apiKeyId  String?   @db.VarChar(32)
+
+  /// Dotted verb, e.g. "auth.login", "points.adjusted", "apikey.created".
+  action     String  @db.VarChar(64)
+  targetType String? @db.VarChar(32)
+  targetId   String? @db.VarChar(64)
+  ip         String? @db.VarChar(64)
+  userAgent  String? @db.VarChar(255)
+  /// Small, structured extra detail (never passwords, secrets or tokens).
+  meta       Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
+}
+
+/// A credential for another system (ClinicMind, Zapier, a script) to call /api/v1.
+/// Only a SHA-256 hash is stored; the key itself is shown once, at creation.
+model ApiKey {
+  id      String  @id @default(cuid())
+  name    String  @db.VarChar(80)
+  /// First characters of the key, so admins can tell keys apart.
+  prefix  String  @db.VarChar(20)
+  keyHash String  @unique @db.VarChar(64)
+  /// String array of scopes such as "patients:read".
+  scopes  Json
+
+  createdById String?
+  createdBy   User?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  revokedAt   DateTime?
+
+  createdAt DateTime @default(now())
+}
+
+/// An HTTPS endpoint that receives signed JSON notifications when things happen here.
+model Webhook {
+  id          String  @id @default(cuid())
+  name        String  @db.VarChar(80)
+  url         String  @db.VarChar(500)
+  /// Shared secret for the HMAC signature header. Shown once, at creation.
+  secret      String  @db.VarChar(128)
+  /// String array of event names such as "session.completed".
+  events      Json
+  isActive    Boolean @default(true)
+  description String? @db.VarChar(255)
+
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  deliveries WebhookDelivery[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// One attempt-series to send one event to one webhook. Kept for debugging and retries.
+model WebhookDelivery {
+  id        String  @id @default(cuid())
+  webhookId String
+  webhook   Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  event          String         @db.VarChar(64)
+  payload        Json
+  status         DeliveryStatus @default(PENDING)
+  attempts       Int            @default(0)
+  responseStatus Int?
+  /// First kilobyte of the last response body, for troubleshooting.
+  responseBody   String?        @db.VarChar(1000)
+  lastError      String?        @db.VarChar(500)
+  deliveredAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([webhookId, createdAt])
+  @@index([status, createdAt])
 }

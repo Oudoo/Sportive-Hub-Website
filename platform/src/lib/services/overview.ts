@@ -14,6 +14,8 @@ export async function getOverview() {
     pointsRedeemed,
     referredPatients,
     publishedUpdates,
+    pendingRedemptions,
+    failedSignInsToday,
   ] = await prisma.$transaction([
     prisma.user.count({ where: { role: "PATIENT" } }),
     prisma.user.count({ where: { role: "PATIENT", createdAt: { gte: monthStart } } }),
@@ -23,6 +25,8 @@ export async function getOverview() {
     prisma.loyaltyTransaction.aggregate({ _sum: { points: true }, where: { reason: "REWARD_REDEMPTION" } }),
     prisma.user.count({ where: { role: "PATIENT", referredById: { not: null } } }),
     prisma.update.count({ where: { publishedAt: { not: null } } }),
+    prisma.redemption.count({ where: { status: "PENDING" } }),
+    prisma.auditLog.count({ where: { action: { in: ["auth.login_failed", "auth.locked"] }, createdAt: { gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) } } }),
   ]);
 
   // Kept out of the batch above: Prisma types groupBy results precisely only when it is awaited on its own.
@@ -57,6 +61,8 @@ export async function getOverview() {
     pointsRedeemed: -(pointsRedeemed._sum.points ?? 0),
     referredPatients,
     publishedUpdates,
+    pendingRedemptions,
+    failedSignInsToday,
     topReferrers,
   };
 }

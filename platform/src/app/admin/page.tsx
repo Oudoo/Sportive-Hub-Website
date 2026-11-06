@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Card, Empty, PageTitle, Stat, Table, Td, Th } from "@/components/ui";
+import { Badge, Card, Empty, PageTitle, Stat, Table, Td, Th } from "@/components/ui";
+import { getSecuritySummary } from "@/lib/services/audit";
 import { getOverview } from "@/lib/services/overview";
 
 export const metadata: Metadata = { title: "Overview" };
 
 export default async function OverviewPage() {
-  const data = await getOverview();
+  const [data, security] = await Promise.all([getOverview(), getSecuritySummary()]);
 
   return (
     <>
@@ -18,7 +19,15 @@ export default async function OverviewPage() {
         <Stat label="Referred patients" value={data.referredPatients} hint="Signed up with a friend's code" />
         <Stat label="Points distributed" value={data.pointsDistributed.toLocaleString()} hint="All time, across every patient" />
         <Stat label="Points redeemed" value={data.pointsRedeemed.toLocaleString()} hint="Spent on rewards" />
-        <Stat label="Published updates" value={data.publishedUpdates} hint={<Link href="/admin/updates" className="underline underline-offset-4">Post an update</Link>} />
+        <Stat
+          label="Vouchers to fulfil"
+          value={data.pendingRedemptions}
+          hint={
+            <Link href="/admin/loyalty/redemptions?status=PENDING" className="underline underline-offset-4">
+              Open the queue
+            </Link>
+          }
+        />
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
@@ -51,19 +60,58 @@ export default async function OverviewPage() {
           )}
         </Card>
 
-        <Card title="Quick actions">
-          <ul className="grid gap-2 text-sm">
-            <li>
-              <Link href="/admin/sessions" className="underline underline-offset-4">Book a session</Link> for a patient.
-            </li>
-            <li>
-              <Link href="/admin/patients" className="underline underline-offset-4">Find a patient</Link> to adjust points or redeem a reward.
-            </li>
-            <li>
-              <Link href="/admin/updates" className="underline underline-offset-4">Post an announcement</Link> or a health tip.
-            </li>
-          </ul>
-        </Card>
+        <div className="grid gap-6 content-start">
+          <Card title="Security, last 24 hours">
+            <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+              <div>
+                <dt className="text-xs uppercase tracking-[0.12em] text-olive">Failed sign-ins</dt>
+                <dd className="text-2xl tabular-nums">{security.failedSignIns}</dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-[0.12em] text-olive">Lockouts</dt>
+                <dd className="text-2xl tabular-nums">{security.lockouts}</dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-[0.12em] text-olive">Locked now</dt>
+                <dd className="text-2xl tabular-nums">{security.lockedNow}</dd>
+              </div>
+            </dl>
+            {security.adminsWithout2fa.length > 0 && (
+              <div className="mt-3 text-sm">
+                <Badge tone="warn">Two-factor off</Badge>{" "}
+                {security.adminsWithout2fa.map((a) => a.fullName).join(", ")} ·{" "}
+                <Link href="/account#two-factor" className="underline underline-offset-4">
+                  turn it on
+                </Link>
+              </div>
+            )}
+            <p className="mt-3 text-xs text-olive">
+              <Link href="/admin/activity" className="underline underline-offset-4">
+                Full activity log
+              </Link>
+            </p>
+          </Card>
+
+          <Card title="Quick actions">
+            <ul className="grid gap-2 text-sm">
+              <li>
+                <Link href="/admin/sessions" className="underline underline-offset-4">Book a session</Link> for a patient.
+              </li>
+              <li>
+                <Link href="/admin/patients" className="underline underline-offset-4">Add a patient</Link> and send them a sign-in link.
+              </li>
+              <li>
+                <Link href="/admin/loyalty/rewards" className="underline underline-offset-4">Edit the rewards</Link> patients can redeem.
+              </li>
+              <li>
+                <Link href="/admin/loyalty/settings" className="underline underline-offset-4">Run a promotion</Link> (double points, campaign bonus).
+              </li>
+              <li>
+                <Link href="/admin/updates" className="underline underline-offset-4">Post an announcement</Link> or a health tip.
+              </li>
+            </ul>
+          </Card>
+        </div>
       </div>
     </>
   );

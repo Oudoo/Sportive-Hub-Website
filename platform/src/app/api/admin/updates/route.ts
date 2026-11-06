@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/auth/session";
 import { ok, parseJson, parseQuery, route } from "@/lib/http";
+import { userContext } from "@/lib/security/context";
 import { createUpdate, listUpdates } from "@/lib/services/updates";
 import { paginationSchema, updateCreateSchema } from "@/lib/validation";
 
@@ -14,5 +15,5 @@ export const GET = route(async (request) => {
 export const POST = route(async (request) => {
   const admin = await requireAdmin();
   const input = await parseJson(request, updateCreateSchema);
-  return ok(await createUpdate(input, admin.id), { status: 201 });
+  return ok(await createUpdate(input, userContext(admin, request)), { status: 201 });
 });

@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/auth/session";
 import { ok, parseJson, route, type IdContext } from "@/lib/http";
+import { userContext } from "@/lib/security/context";
 import { adjustPatientPoints } from "@/lib/services/patients";
 import { pointsAdjustSchema } from "@/lib/validation";
 
@@ -12,5 +13,5 @@ export const POST = route<IdContext>(async (request, { params }) => {
   const admin = await requireAdmin();
   const { id } = await params;
   const input = await parseJson(request, pointsAdjustSchema);
-  return ok(await adjustPatientPoints(id, input, admin.id));
+  return ok(await adjustPatientPoints(id, input, userContext(admin, request)));
 });

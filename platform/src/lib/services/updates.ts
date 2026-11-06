@@ -1,6 +1,9 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { HttpError } from "@/lib/http";
+import { emitEvent } from "@/lib/integrations/webhooks";
+import { audit } from "@/lib/security/audit";
+import type { ActionContext } from "@/lib/security/context";
 import type { UpdateCreateInput, UpdateUpdateInput } from "@/lib/validation";
 
 const updateInclude = {
@@ -24,27 +27,37 @@ export async function listUpdates(options: { publishedOnly: boolean; page: numbe
   return { items, total, page: options.page, perPage: options.perPage };
 }
 
-export async function createUpdate(input: UpdateCreateInput, authorId: string): Promise<UpdateWithAuthor> {
-  const { publish, ...fields } = input;
-  return prisma.update.create({
-    data: { ...fields, authorId, publishedAt: publish ? new Date() : null },
-    include: updateInclude,
-  });
+function publicUpdate(update: UpdateWithAuthor) {
+  return { id: update.id, kind: update.kind, title: update.title, body: update.body, publishedAt: update.publishedAt };
 }
 
-export async function updateUpdate(id: string, input: UpdateUpdateInput): Promise<UpdateWithAuthor> {
+export async function createUpdate(input: UpdateCreateInput, ctx: ActionContext): Promise<UpdateWithAuthor> {
+  const { publish, ...fields } = input;
+  const update = await prisma.update.create({
+    data: { ...fields, authorId: ctx.actor.type === "USER" ? ctx.actor.id : null, publishedAt: publish ? new Date() : null },
+    include: updateInclude,
+  });
+  await audit({ action: "update.created", actor: ctx.actor, target: { type: "update", id: update.id }, request: ctx.request, meta: { published: publish } });
+  if (update.publishedAt) await emitEvent("update.published", { update: publicUpdate(update) });
+  return update;
+}
+
+export async function updateUpdate(id: string, input: UpdateUpdateInput, ctx: ActionContext): Promise<UpdateWithAuthor> {
   const existing = await prisma.update.findUnique({ where: { id }, select: { publishedAt: true } });
   if (!existing) throw new HttpError(404, "Update not found");
 
   const { publish, ...fields } = input;
   // publish: true keeps the original publish date if it was already live.
-  const publishedAt =
-    publish === undefined ? undefined : publish ? (existing.publishedAt ?? new Date()) : null;
+  const publishedAt = publish === undefined ? undefined : publish ? (existing.publishedAt ?? new Date()) : null;
 
-  return prisma.update.update({ where: { id }, data: { ...fields, publishedAt }, include: updateInclude });
+  const update = await prisma.update.update({ where: { id }, data: { ...fields, publishedAt }, include: updateInclude });
+  await audit({ action: "update.updated", actor: ctx.actor, target: { type: "update", id }, request: ctx.request, meta: { fields: Object.keys(input) } });
+  if (!existing.publishedAt && update.publishedAt) await emitEvent("update.published", { update: publicUpdate(update) });
+  return update;
 }
 
-export async function deleteUpdate(id: string): Promise<void> {
+export async function deleteUpdate(id: string, ctx: ActionContext): Promise<void> {
   const result = await prisma.update.deleteMany({ where: { id } });
   if (result.count === 0) throw new HttpError(404, "Update not found");
+  await audit({ action: "update.deleted", actor: ctx.actor, target: { type: "update", id }, request: ctx.request });
 }

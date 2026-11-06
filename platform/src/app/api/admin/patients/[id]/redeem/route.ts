@@ -1,16 +1,17 @@
 import { requireAdmin } from "@/lib/auth/session";
 import { ok, parseJson, route, type IdContext } from "@/lib/http";
-import { redeemPatientReward } from "@/lib/services/patients";
-import { redeemSchema } from "@/lib/validation";
+import { userContext } from "@/lib/security/context";
+import { redeemReward } from "@/lib/services/rewards";
+import { adminRedeemSchema } from "@/lib/validation";
 
 /**
  * POST /api/admin/patients/:id/redeem
- * Body: { reward: "FREE_SESSION" }
- * Spends the reward's cost from the patient's balance (409 if they cannot afford it).
+ * Body: { rewardId, note? }
+ * Redeems at the front desk: points are deducted and the voucher is marked fulfilled at once.
  */
 export const POST = route<IdContext>(async (request, { params }) => {
   const admin = await requireAdmin();
   const { id } = await params;
-  const { reward } = await parseJson(request, redeemSchema);
-  return ok(await redeemPatientReward(id, reward, admin.id));
+  const input = await parseJson(request, adminRedeemSchema);
+  return ok(await redeemReward({ userId: id, rewardId: input.rewardId, note: input.note }, userContext(admin, request)), { status: 201 });
 });

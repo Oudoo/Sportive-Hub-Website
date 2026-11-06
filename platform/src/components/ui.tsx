@@ -11,11 +11,11 @@ import type {
  * one of these works in both Server and Client Components.
  */
 
-function cx(...classes: Array<string | false | null | undefined>) {
+export function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
-export function Card({ title, action, children, className }: { title?: string; action?: ReactNode; children: ReactNode; className?: string }) {
+export function Card({ title, action, children, className }: { title?: ReactNode; action?: ReactNode; children: ReactNode; className?: string }) {
   return (
     <section className={cx("rounded-sm border border-charcoal/15 bg-white/60 p-5 md:p-6", className)}>
       {(title || action) && (
@@ -29,11 +29,14 @@ export function Card({ title, action, children, className }: { title?: string; a
   );
 }
 
-export function PageTitle({ children, lede }: { children: ReactNode; lede?: ReactNode }) {
+export function PageTitle({ children, lede, action }: { children: ReactNode; lede?: ReactNode; action?: ReactNode }) {
   return (
-    <div className="mb-6">
-      <h1 className="text-3xl font-medium tracking-tight md:text-4xl">{children}</h1>
-      {lede && <p className="mt-2 max-w-2xl text-olive">{lede}</p>}
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h1 className="text-3xl font-medium tracking-tight md:text-4xl">{children}</h1>
+        {lede && <p className="mt-2 max-w-2xl text-olive">{lede}</p>}
+      </div>
+      {action}
     </div>
   );
 }
@@ -47,21 +50,19 @@ const buttonStyles: Record<ButtonVariant, string> = {
   ghost: "bg-transparent text-olive border-transparent hover:text-charcoal",
 };
 
+export const buttonClass = (variant: ButtonVariant = "primary", className?: string) =>
+  cx(
+    "inline-flex min-h-10 items-center justify-center gap-2 rounded-sm border px-4 text-xs font-medium uppercase tracking-[0.12em] transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+    buttonStyles[variant],
+    className,
+  );
+
 export function Button({
   variant = "primary",
   className,
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant }) {
-  return (
-    <button
-      {...props}
-      className={cx(
-        "inline-flex min-h-10 items-center justify-center gap-2 rounded-sm border px-4 text-xs font-medium uppercase tracking-[0.12em] transition-colors disabled:cursor-not-allowed disabled:opacity-50",
-        buttonStyles[variant],
-        className,
-      )}
-    />
-  );
+  return <button {...props} className={buttonClass(variant, className)} />;
 }
 
 const fieldStyles =
@@ -80,7 +81,7 @@ export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTex
 }
 
 /** A labelled form control with an optional inline error. */
-export function Field({ label, htmlFor, error, hint, children }: { label: string; htmlFor?: string; error?: string; hint?: string; children: ReactNode }) {
+export function Field({ label, htmlFor, error, hint, children }: { label: string; htmlFor?: string; error?: string; hint?: ReactNode; children: ReactNode }) {
   return (
     <div className="grid gap-1.5">
       <label htmlFor={htmlFor} className="text-xs uppercase tracking-[0.12em] text-olive">
@@ -89,6 +90,19 @@ export function Field({ label, htmlFor, error, hint, children }: { label: string
       {children}
       {error ? <p className="text-sm text-red-800">{error}</p> : hint ? <p className="text-sm text-olive/80">{hint}</p> : null}
     </div>
+  );
+}
+
+/** A checkbox with its label on one line. */
+export function Checkbox({ label, hint, ...props }: InputHTMLAttributes<HTMLInputElement> & { label: ReactNode; hint?: ReactNode }) {
+  return (
+    <label className="flex items-start gap-2 text-sm">
+      <input type="checkbox" {...props} className="mt-1 h-4 w-4 accent-olive" />
+      <span>
+        {label}
+        {hint && <span className="block text-xs text-olive/80">{hint}</span>}
+      </span>
+    </label>
   );
 }
 
@@ -110,8 +124,13 @@ export function Badge({ tone = "neutral", children }: { tone?: Tone; children: R
   );
 }
 
-export function Alert({ tone = "info", children }: { tone?: "info" | "good" | "bad"; children: ReactNode }) {
-  const styles = { info: "border-olive/30 bg-pastel/40 text-olive", good: "border-olive/30 bg-pastel text-olive", bad: "border-red-800/30 bg-red-50 text-red-900" };
+export function Alert({ tone = "info", children }: { tone?: "info" | "good" | "bad" | "warn"; children: ReactNode }) {
+  const styles = {
+    info: "border-olive/30 bg-pastel/40 text-olive",
+    good: "border-olive/30 bg-pastel text-olive",
+    bad: "border-red-800/30 bg-red-50 text-red-900",
+    warn: "border-sand bg-sand/30 text-charcoal",
+  };
   return <div role="status" className={cx("rounded-sm border px-3 py-2 text-sm", styles[tone])}>{children}</div>;
 }
 
@@ -147,4 +166,58 @@ export function Td({ children, className }: { children?: ReactNode; className?: 
 
 export function Empty({ children }: { children: ReactNode }) {
   return <p className="py-6 text-center text-sm text-olive">{children}</p>;
+}
+
+/** A thin bar from 0 to 1, used for tier progress. */
+export function ProgressBar({ value, label }: { value: number; label?: string }) {
+  const percent = Math.round(Math.min(1, Math.max(0, value)) * 100);
+  return (
+    <div className="h-2 w-full overflow-hidden rounded-full bg-charcoal/10" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} aria-label={label}>
+      <div className="h-full rounded-full bg-olive transition-[width]" style={{ width: `${percent}%` }} />
+    </div>
+  );
+}
+
+/** Monospace block for codes, links and secrets. */
+export function Code({ children, className }: { children: ReactNode; className?: string }) {
+  return <code className={cx("break-all rounded-sm bg-charcoal/5 px-1.5 py-0.5 font-mono text-[13px]", className)}>{children}</code>;
+}
+
+/** Key/value rows for detail panels. */
+export function Dl({ rows }: { rows: Array<{ label: string; value: ReactNode }> }) {
+  return (
+    <dl className="grid gap-2 text-sm">
+      {rows.map((row) => (
+        <div key={row.label}>
+          <dt className="text-xs uppercase tracking-[0.12em] text-olive">{row.label}</dt>
+          <dd className="break-words">{row.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/** Previous / next links for paginated lists. */
+export function Pagination({ page, total, perPage, href, label }: { page: number; total: number; perPage: number; href: (page: number) => string; label: string }) {
+  const lastPage = Math.max(1, Math.ceil(total / perPage));
+  if (lastPage <= 1) return null;
+  return (
+    <div className="flex items-center justify-between text-sm">
+      <span className="text-olive">
+        Page {page} of {lastPage} · {total} {label}
+      </span>
+      <div className="flex gap-4">
+        {page > 1 && (
+          <a href={href(page - 1)} className="underline underline-offset-4">
+            Previous
+          </a>
+        )}
+        {page < lastPage && (
+          <a href={href(page + 1)} className="underline underline-offset-4">
+            Next
+          </a>
+        )}
+      </div>
+    </div>
+  );
 }

@@ -3,19 +3,30 @@
 import { useState } from "react";
 import { Button } from "@/components/ui";
 
-/** The patient's code with copy and WhatsApp-share buttons. */
-export function ReferralCard({ code, link, bonus }: { code: string; link: string; bonus: number }) {
-  const [copied, setCopied] = useState(false);
-  const message = `Join me at Sportive Hub and we both get bonus points. Sign up with my code ${code}: ${link}`;
+/** The patient's code with copy, native share and WhatsApp buttons. */
+export function ReferralCard({ code, link, message }: { code: string; link: string; message: string }) {
+  const [copied, setCopied] = useState<"link" | "message" | null>(null);
 
-  async function copy() {
+  async function copy(what: "link" | "message") {
     try {
-      await navigator.clipboard.writeText(link);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(what === "link" ? link : message);
+      setCopied(what);
+      setTimeout(() => setCopied(null), 2000);
     } catch {
       prompt("Copy your referral link:", link);
     }
+  }
+
+  async function share() {
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title: "Join me at Sportive Hub", text: message });
+        return;
+      } catch {
+        /* cancelled: fall through to copying */
+      }
+    }
+    copy("message");
   }
 
   return (
@@ -23,20 +34,23 @@ export function ReferralCard({ code, link, bonus }: { code: string; link: string
       <div className="rounded-sm bg-olive px-4 py-3 text-milk">
         <div className="text-[11px] uppercase tracking-[0.2em] text-pastel">Your code</div>
         <div className="font-mono text-2xl tracking-wider">{code}</div>
+        <div className="mt-1 break-all text-xs text-milk/80">{link}</div>
       </div>
-      <p className="text-sm text-olive">
-        Friends who sign up with it get a welcome bonus, and you get {bonus} points each time.
-      </p>
       <div className="flex flex-wrap gap-2">
-        <Button onClick={copy}>{copied ? "Copied" : "Copy link"}</Button>
         <a
-          className="inline-flex min-h-10 items-center rounded-sm border border-charcoal/40 px-4 text-xs font-medium uppercase tracking-[0.12em] hover:border-charcoal"
+          className="inline-flex min-h-10 items-center rounded-sm border border-charcoal bg-charcoal px-4 text-xs font-medium uppercase tracking-[0.12em] text-milk hover:border-olive hover:bg-olive"
           href={`https://wa.me/?text=${encodeURIComponent(message)}`}
           target="_blank"
           rel="noopener"
         >
           Share on WhatsApp
         </a>
+        <Button variant="secondary" onClick={() => copy("link")}>
+          {copied === "link" ? "Link copied" : "Copy link"}
+        </Button>
+        <Button variant="secondary" onClick={share}>
+          {copied === "message" ? "Message copied" : "Share…"}
+        </Button>
       </div>
     </div>
   );

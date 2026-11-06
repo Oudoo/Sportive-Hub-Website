@@ -32,16 +32,17 @@ export function clearedSessionCookie() {
 }
 
 /** Creates a signed token for a user who has just authenticated. */
-export function issueSessionToken(user: Pick<SafeUser, "id" | "role" | "fullName">) {
-  return signSessionToken({ sub: user.id, role: user.role, name: user.fullName });
+export function issueSessionToken(user: Pick<SafeUser, "id" | "role" | "fullName" | "sessionVersion">) {
+  return signSessionToken({ sub: user.id, role: user.role, name: user.fullName, sv: user.sessionVersion });
 }
 
 /**
  * The current user, or null. Accepts the session cookie (browser) or an
- * `Authorization: Bearer <token>` header (future mobile app / scripts).
+ * `Authorization: Bearer <token>` header (scripts, a future mobile app).
  *
  * The token only proves who signed in; the user is re-read from the database on
- * every call so a deactivated account or a changed role takes effect immediately.
+ * every call so a deactivated account, a changed role, a password change or a
+ * "sign out everywhere" takes effect immediately.
  */
 export async function getSessionUser(): Promise<SafeUser | null> {
   const [cookieStore, headerStore] = await Promise.all([cookies(), headers()]);
@@ -54,6 +55,7 @@ export async function getSessionUser(): Promise<SafeUser | null> {
 
   const user = await prisma.user.findUnique({ where: { id: claims.sub }, select: safeUserSelect });
   if (!user || !user.isActive) return null;
+  if (user.sessionVersion !== claims.sv) return null;
   return user;
 }
 

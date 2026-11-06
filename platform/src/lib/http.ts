@@ -8,6 +8,8 @@ export class HttpError extends Error {
     public readonly status: number,
     message: string,
     public readonly details?: unknown,
+    /** Extra response headers, e.g. Retry-After on a 429. */
+    public readonly headers?: Record<string, string>,
   ) {
     super(message);
     this.name = "HttpError";
@@ -18,8 +20,8 @@ export function ok<T>(data: T, init?: ResponseInit) {
   return NextResponse.json(data, init);
 }
 
-export function fail(status: number, message: string, details?: unknown) {
-  return NextResponse.json({ error: message, ...(details !== undefined ? { details } : {}) }, { status });
+export function fail(status: number, message: string, details?: unknown, headers?: Record<string, string>) {
+  return NextResponse.json({ error: message, ...(details !== undefined ? { details } : {}) }, { status, headers });
 }
 
 /** Flattens Zod issues into `{ path, message }` pairs the forms can show next to a field. */
@@ -27,12 +29,21 @@ export function issuesOf(error: ZodError) {
   return error.issues.map((issue) => ({ path: issue.path.join("."), message: issue.message }));
 }
 
-/** Reads and validates a JSON request body. 400 for non-JSON, 422 for invalid data. */
+/** Request bodies above this are refused before parsing. The largest legitimate body is an update post. */
+const MAX_BODY_BYTES = 256 * 1024;
+
+/** Reads and validates a JSON request body. 400 for non-JSON, 413 for oversized, 422 for invalid data. */
 export async function parseJson<T>(request: Request, schema: ZodType<T>): Promise<T> {
+  const declared = Number(request.headers.get("content-length") ?? 0);
+  if (declared > MAX_BODY_BYTES) throw new HttpError(413, "Request body is too large");
+
   let raw: unknown;
   try {
-    raw = await request.json();
-  } catch {
+    const text = await request.text();
+    if (text.length > MAX_BODY_BYTES) throw new HttpError(413, "Request body is too large");
+    raw = text.length === 0 ? {} : JSON.parse(text);
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
     throw new HttpError(400, "Request body must be JSON");
   }
   const result = schema.safeParse(raw);
@@ -54,7 +65,7 @@ export function parseQuery<T>(url: URL, schema: ZodType<T>): T {
 /** Turns any thrown value into a JSON error response without leaking internals. */
 export function errorResponse(error: unknown): Response {
   if (error instanceof HttpError) {
-    return fail(error.status, error.message, error.details);
+    return fail(error.status, error.message, error.details, error.headers);
   }
   if (error instanceof ZodError) {
     return fail(422, "Validation failed", issuesOf(error));
@@ -88,3 +99,6 @@ export function route<Ctx = StaticContext>(handler: RouteHandler<Ctx>): RouteHan
 
 /** Context type for dynamic route files such as `[id]/route.ts`. */
 export type IdContext = { params: Promise<{ id: string }> };
+
+/** Shape of every paginated list the API returns. */
+export type Paginated<T> = { items: T[]; total: number; page: number; perPage: number };

@@ -5,7 +5,7 @@ import { getSessionUser } from "@/lib/auth/session";
 
 /**
  * Every admin page lives under this layout. proxy.ts already turned away anyone
- * without an admin token; this re-checks against the database (role, isActive).
+ * without an admin token; this re-checks against the database (role, isActive, sessionVersion).
  */
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const user = await getSessionUser();
@@ -14,7 +14,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   return (
     <div className="flex min-h-screen flex-col md:grid md:grid-cols-[240px_minmax(0,1fr)]">
-      <Sidebar userName={user.fullName} />
+      <Sidebar userName={user.fullName} twoFactorOn={!!user.totpEnabledAt} />
       <main className="w-full max-w-6xl px-4 py-6 md:px-10 md:py-10">{children}</main>
     </div>
   );

@@ -37,15 +37,15 @@ export function ChangePasswordForm() {
   return (
     <form ref={formRef} onSubmit={onSubmit} className="grid gap-4">
       {error && error.issues.length === 0 && <Alert tone="bad">{error.message}</Alert>}
-      {success && <Alert tone="good">Password changed. Use the new one next time you sign in.</Alert>}
+      {success && <Alert tone="good">Password changed. Other devices have been signed out.</Alert>}
       <Field label="Current password" htmlFor="currentPassword" error={error?.field("currentPassword")}>
         <Input id="currentPassword" name="currentPassword" type="password" autoComplete="current-password" required />
       </Field>
-      <Field label="New password" htmlFor="newPassword" error={error?.field("newPassword")} hint="At least 8 characters.">
-        <Input id="newPassword" name="newPassword" type="password" autoComplete="new-password" minLength={8} required />
+      <Field label="New password" htmlFor="newPassword" error={error?.field("newPassword")} hint="At least 10 characters. A short sentence works well.">
+        <Input id="newPassword" name="newPassword" type="password" autoComplete="new-password" minLength={10} required />
       </Field>
       <Field label="Confirm new password" htmlFor="confirmPassword" error={error?.field("confirmPassword")}>
-        <Input id="confirmPassword" name="confirmPassword" type="password" autoComplete="new-password" minLength={8} required />
+        <Input id="confirmPassword" name="confirmPassword" type="password" autoComplete="new-password" minLength={10} required />
       </Field>
       <Button type="submit" disabled={pending} className="justify-self-start">
         {pending ? "Saving…" : "Change password"}

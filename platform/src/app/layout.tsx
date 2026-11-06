@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { connection } from "next/server";
 import type { ReactNode } from "react";
 import { PwaRegister } from "@/components/pwa/PwaRegister";
 import "./globals.css";
@@ -20,7 +21,11 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  // Every page is rendered per request so the Content-Security-Policy nonce from
+  // proxy.ts can be applied to the scripts of that exact response.
+  await connection();
+
   return (
     <html lang="en" className="h-full">
       <head>

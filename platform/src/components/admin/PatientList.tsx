@@ -1,18 +1,14 @@
 import Link from "next/link";
-import { Badge, Button, Empty, Input, Table, Td, Th } from "@/components/ui";
-import { formatDate } from "@/lib/format";
+import { Badge, Button, Empty, Input, Pagination, Table, Td, Th } from "@/components/ui";
+import { TIER_TONE, formatDate } from "@/lib/format";
 import type { PatientRow } from "@/lib/services/patients";
-
-const TIER_TONE = { Bronze: "neutral", Silver: "warn", Gold: "good" } as const;
 
 /** Server component: search box plus the patient table with points and referral codes. */
 export function PatientList({ items, total, page, perPage, q }: { items: PatientRow[]; total: number; page: number; perPage: number; q?: string }) {
-  const lastPage = Math.max(1, Math.ceil(total / perPage));
-
   return (
     <div className="grid gap-4">
       <form method="get" action="/admin/patients" className="flex flex-wrap gap-2">
-        <Input name="q" defaultValue={q ?? ""} placeholder="Search name, email, phone or code" className="max-w-sm" aria-label="Search patients" />
+        <Input name="q" defaultValue={q ?? ""} placeholder="Search name, email, phone, code or external id" className="max-w-sm" aria-label="Search patients" />
         <Button type="submit" variant="secondary">
           Search
         </Button>
@@ -35,6 +31,7 @@ export function PatientList({ items, total, page, perPage, q }: { items: Patient
               <Th>Tier</Th>
               <Th>Referral code</Th>
               <Th className="text-right">Referred</Th>
+              <Th className="text-right">Sessions</Th>
               <Th>Joined</Th>
             </tr>
           </thead>
@@ -45,11 +42,11 @@ export function PatientList({ items, total, page, perPage, q }: { items: Patient
                   <Link href={`/admin/patients/${p.id}`} className="font-medium underline underline-offset-4">
                     {p.fullName}
                   </Link>
-                  {!p.isActive && (
-                    <div className="mt-1">
-                      <Badge tone="bad">Deactivated</Badge>
-                    </div>
-                  )}
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {!p.isActive && <Badge tone="bad">Deactivated</Badge>}
+                    {!p.lastLoginAt && <Badge tone="warn">Never signed in</Badge>}
+                    {p.externalSource && <Badge tone="neutral">{p.externalSource}</Badge>}
+                  </div>
                 </Td>
                 <Td>
                   <div>{p.email}</div>
@@ -57,10 +54,11 @@ export function PatientList({ items, total, page, perPage, q }: { items: Patient
                 </Td>
                 <Td className="text-right tabular-nums">{p.loyaltyPoints}</Td>
                 <Td>
-                  <Badge tone={TIER_TONE[p.tier]}>{p.tier}</Badge>
+                  <Badge tone={TIER_TONE[p.tier.key]}>{p.tier.name}</Badge>
                 </Td>
                 <Td className="font-mono text-xs">{p.referralCode}</Td>
                 <Td className="text-right tabular-nums">{p._count.referrals}</Td>
+                <Td className="text-right tabular-nums">{p._count.sessions}</Td>
                 <Td className="whitespace-nowrap">{formatDate(p.createdAt)}</Td>
               </tr>
             ))}
@@ -68,25 +66,7 @@ export function PatientList({ items, total, page, perPage, q }: { items: Patient
         </Table>
       )}
 
-      {lastPage > 1 && (
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-olive">
-            Page {page} of {lastPage} · {total} patients
-          </span>
-          <div className="flex gap-4">
-            {page > 1 && (
-              <Link href={{ pathname: "/admin/patients", query: { q, page: String(page - 1) } }} className="underline underline-offset-4">
-                Previous
-              </Link>
-            )}
-            {page < lastPage && (
-              <Link href={{ pathname: "/admin/patients", query: { q, page: String(page + 1) } }} className="underline underline-offset-4">
-                Next
-              </Link>
-            )}
-          </div>
-        </div>
-      )}
+      <Pagination page={page} total={total} perPage={perPage} label="patients" href={(n) => `/admin/patients?${new URLSearchParams({ ...(q ? { q } : {}), page: String(n) })}`} />
     </div>
   );
 }
