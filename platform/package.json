@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
-    "build:hostinger": "prisma generate && prisma migrate deploy && prisma db seed && next build",
+    "build": "prisma generate && next build --webpack",
+    "build:hostinger": "prisma generate && prisma migrate deploy && prisma db seed && next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "db:migrate": "prisma migrate dev",
@@ -14,7 +14,7 @@
   "dependencies": {
     "@prisma/adapter-mariadb": "^7.10.1",
     "@prisma/client": "^7.10.1",
-    "@tailwindcss/turbopack": "^4",
+    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
