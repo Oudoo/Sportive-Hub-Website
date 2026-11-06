@@ -154,20 +154,35 @@ Admin only:
 
 Not done yet, and worth doing before opening the portal to the public: rate limiting on `/api/auth/*` (e.g. `rate-limiter-flexible` backed by MySQL), email verification, password reset, and automated tests in the repo (the API and browser checks used so far live outside it).
 
-## Deploy to Hostinger
+## Hosting
 
-The app runs as its own Hostinger website (for example `app.sportive-hub.com`), separate from the static site.
+The app is live at **https://admin.sportive-hub.com**, a Node.js website on the Hostinger plan, separate from the static site. What exists on the account:
 
-1. **Create the website** in hPanel (Websites → Add website → Node.js), on a subdomain such as `app.sportive-hub.com`. Business and Cloud plans run Node.js apps.
-2. **Connect the repository**: Websites → Manage → Advanced → Git, then pick this repo and branch `main`, with **root directory** `platform` (this app lives in a subfolder). Build settings: app type Next.js, Node 22, build script `build`, output `.next`.
-3. **Attach a database**: Node.js → Database. Hostinger creates it and writes `DATABASE_URL` (and `DB_*`) into the app's environment.
-4. **Set the other variables** (Node.js → Environment variables): `AUTH_SECRET` (`openssl rand -base64 48`), `APP_URL=https://app.sportive-hub.com`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`, `NODE_ENV=production`. Leave `SEED_DEMO` unset.
-5. **First deploy**: push to `main` (or Deploy in hPanel). After the build, run the migrations and the seed once. From a machine that can reach the database with the external host from hPanel:
-   ```bash
-   DATABASE_URL="mysql://USER:PASSWORD@srvNNNN.hstgr.io:3306/DBNAME" npx prisma migrate deploy
-   DATABASE_URL="..." ADMIN_EMAIL=... ADMIN_PASSWORD=... npx prisma db seed
-   ```
-   Later deploys: run `npx prisma migrate deploy` again whenever a commit adds a migration.
-6. Sign in at `https://app.sportive-hub.com/login` with the admin account.
+- The website `admin.sportive-hub.com` (its DNS records and SSL were created with it; HTTPS redirect is on).
+- A MySQL database attached to it. Hostinger wrote `DATABASE_URL` and `DB_*` into the app's environment variables.
+- Environment variables: `AUTH_SECRET`, `APP_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`, `NODE_ENV`, plus the database ones. Read or change them in hPanel → Websites → admin.sportive-hub.com → Node.js → Environment variables.
+- Build settings: Node 22, app type Next.js, build script **`build:hostinger`**, output `.next`. That script runs `prisma generate`, `prisma migrate deploy` and `prisma db seed` before `next build`, so every deploy applies new migrations and keeps the admin account; there is no separate release step.
 
-The same can be done with the Hostinger API or the `hostinger` CLI (`hostinger up platform --domain app.sportive-hub.com --type nodejs --app-type next --node-version 22`).
+### Deploying a new version
+
+The app is not connected to GitHub yet, so a deploy is an upload of the committed source. From the repository root:
+
+```bash
+git archive --format=zip -o app_$(date -u +%Y%m%d_%H%M%S).zip HEAD:platform
+```
+
+Then either upload that zip in hPanel (Websites → admin.sportive-hub.com → Deployments → upload), or use the Hostinger API: `POST /api/hosting/v1/files/upload-urls` for the website, upload the zip there with the TUS protocol, and `POST .../nodejs/builds` with `source_type: "archive"` and the stored build settings. The build takes about two minutes and publishes itself.
+
+To deploy on every push instead, connect GitHub once in hPanel (Websites → Manage → Advanced → Git) and pick this repository, branch `main`, **root directory `platform`**; there is no API for that first connection.
+
+### If the site shows 503 after a deploy
+
+The first deploy came up in a restart loop (the server printed "Ready" and died, over and over) until the app was restarted: hPanel → Node.js → Restart, or `POST .../nodejs/server/restart`. Hostinger's 503 guide says the same, and names process and memory limits as the usual cause.
+
+### Logs
+
+hPanel → Node.js → Runtime logs shows only what the app writes with `console.log`. `src/instrumentation.ts` mirrors errors and crashes to stdout on Hostinger so they appear there too.
+
+### Build notes
+
+Production builds use `next build --webpack`. Hostinger's build environment could not run the helper process Turbopack spawns for CSS transforms (the first build died in `globals.css`), so Tailwind runs through PostCSS (`postcss.config.mjs`) and webpack bundles the app. `next dev` still uses Turbopack.
