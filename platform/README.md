@@ -192,7 +192,7 @@ To deploy on every push instead, connect GitHub once in hPanel (Websites → Man
 
 ### If the site shows 503 after a deploy
 
-The first deploy came up in a restart loop (the server printed "Ready" and died, over and over) until the app was restarted: hPanel → Node.js → Restart, or `POST .../nodejs/server/restart`. Hostinger's 503 guide says the same, and names process and memory limits as the usual cause.
+Every deploy so far came up in a restart loop (the server printed "Ready" and died, over and over) until the app was restarted by hand, once or twice: hPanel → Node.js → Restart, or `POST .../nodejs/server/restart`, then wait 10–30 seconds. The runtime log shows no application error during the loop, so it is the runner's start-up rather than the code. Hostinger's 503 guide names process and memory limits as the usual cause; if it keeps happening, it is worth a ticket to Hostinger support.
 
 ### Logs
 
