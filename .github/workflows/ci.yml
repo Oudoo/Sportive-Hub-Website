@@ -1,0 +1,45 @@
+# Runs on every push and pull request: dependency audit, lint, types and a production build
+# of the platform app. The static site needs no build.
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  platform:
+    name: Platform (audit, lint, types, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: platform
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: platform/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      # Fails the build on any known vulnerability of moderate severity or higher,
+      # in production and development dependencies alike (Hostinger scans both).
+      - name: Audit dependencies
+        run: npm audit --audit-level=moderate
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Generate Prisma client and check types
+        run: npx prisma generate --config prisma7.config.ts && npm run typecheck
+
+      # The build needs no database: the client is created lazily at request time.
+      - name: Build
+        run: npx next build --webpack
+        env:
+          AUTH_SECRET: ci-only-secret-at-least-32-characters-long
+          APP_URL: https://admin.sportive-hub.com
