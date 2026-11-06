@@ -61,7 +61,8 @@ export async function proxy(request: NextRequest) {
   }
 
   const needsAdmin = pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
-  const needsUser = needsAdmin || pathname.startsWith("/portal") || pathname.startsWith("/api/me");
+  const needsUser =
+    needsAdmin || pathname.startsWith("/portal") || pathname.startsWith("/account") || pathname.startsWith("/api/me");
   if (!needsUser) return NextResponse.next();
 
   const token = request.cookies.get(SESSION_COOKIE)?.value ?? bearerToken(request);
@@ -83,5 +84,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/portal/:path*", "/api/:path*"],
+  matcher: ["/admin/:path*", "/portal/:path*", "/account/:path*", "/api/:path*"],
 };

@@ -34,6 +34,17 @@ export const loginSchema = z.object({
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
+export const passwordChangeSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Enter your current password"),
+    newPassword: z.string().min(8, "Use at least 8 characters").max(128),
+  })
+  .refine((d) => d.currentPassword !== d.newPassword, {
+    path: ["newPassword"],
+    message: "Choose a different password",
+  });
+export type PasswordChangeInput = z.infer<typeof passwordChangeSchema>;
+
 // --- Sessions ---------------------------------------------------------------
 
 export const sessionCreateSchema = z.object({

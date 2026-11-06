@@ -5,7 +5,7 @@ import { HttpError } from "@/lib/http";
 import { applyReferral } from "@/lib/loyalty";
 import { generateReferralCode } from "@/lib/referral";
 import { safeUserSelect, type SafeUser } from "@/lib/serialize";
-import type { LoginInput, RegisterInput } from "@/lib/validation";
+import type { LoginInput, PasswordChangeInput, RegisterInput } from "@/lib/validation";
 
 /** True when `error` is a unique-constraint violation on the named column. */
 function isUniqueViolationOn(error: unknown, column: string): boolean {
@@ -82,4 +82,21 @@ export async function loginUser(input: LoginInput): Promise<SafeUser> {
   const { passwordHash, ...safeUser } = user;
   void passwordHash; // stripped on purpose: it must never leave this function
   return safeUser;
+}
+
+/** Changes the signed-in user's password after checking the current one. */
+export async function changePassword(userId: string, input: PasswordChangeInput): Promise<void> {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { passwordHash: true } });
+  if (!user) throw new HttpError(401, "Sign in required");
+
+  if (!(await verifyPassword(input.currentPassword, user.passwordHash))) {
+    throw new HttpError(422, "Current password is incorrect", [
+      { path: "currentPassword", message: "That is not your current password" },
+    ]);
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { passwordHash: await hashPassword(input.newPassword) },
+  });
 }

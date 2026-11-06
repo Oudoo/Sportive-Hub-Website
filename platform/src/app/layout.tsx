@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import { PwaRegister } from "@/components/pwa/PwaRegister";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -7,6 +8,16 @@ export const metadata: Metadata = {
   description: "Sportive Hub patient portal and admin dashboard.",
   // Internal app: keep it out of search engines.
   robots: { index: false, follow: false },
+  // Installable app: the manifest comes from src/app/manifest.ts; these cover iOS.
+  appleWebApp: { capable: true, title: "Sportive Hub", statusBarStyle: "default" },
+  icons: { apple: "/apple-touch-icon.png" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#595641",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -22,7 +33,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           rel="stylesheet"
         />
       </head>
-      <body className="flex min-h-full flex-col font-sans">{children}</body>
+      <body className="flex min-h-full flex-col font-sans">
+        {children}
+        <PwaRegister />
+      </body>
     </html>
   );
 }

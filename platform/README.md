@@ -123,8 +123,10 @@ Public:
 
 Signed in (any role):
 
-| GET | `/api/me` | | Profile, tier, referral link, rewards, upcoming sessions, points history, latest updates |
+| Method | Path | Body | Notes |
 |---|---|---|---|
+| GET | `/api/me` | | Profile, tier, referral link, rewards, upcoming sessions, points history, latest updates |
+| POST | `/api/me/password` | `currentPassword, newPassword` | Changes the signed-in user's password |
 
 Admin only:
 
@@ -141,6 +143,19 @@ Admin only:
 | GET / PATCH | `/api/admin/patients/:id` | PATCH: `fullName?, phone?, isActive?` |
 | POST | `/api/admin/patients/:id/points` | `points` (non-zero, negative to deduct), `note` |
 | POST | `/api/admin/patients/:id/redeem` | `reward: "FREE_SESSION"` |
+
+## Installable app (PWA)
+
+The app can be installed on a phone or desktop like a native app:
+
+- `src/app/manifest.ts` serves `/manifest.webmanifest` (name, icons in `public/icons/`, standalone display, brand colours). The root layout adds the iOS tags and `apple-touch-icon.png`.
+- `public/sw.js` is the service worker, registered in production by `src/components/pwa/PwaRegister.tsx`. It caches only the app shell (the `/offline` page, icons, manifest) and the hashed files under `/_next/static`. Pages and API responses are never cached, so nothing private stays on a shared device. Without a connection, navigating shows `/offline`.
+- An **Install app** button appears in the admin sidebar and the portal header when the browser offers installation (Chrome, Edge, Android). On iPhone, use Share → Add to Home Screen.
+- To force every client to drop old caches, bump `VERSION` in `public/sw.js`.
+
+## Your account
+
+`/account` (any signed-in user) shows the profile and has the change-password form (`POST /api/me/password` with `currentPassword` and `newPassword`). The seed only creates the admin when it is missing, so changing `ADMIN_PASSWORD` in the environment later does not change the account: use this page.
 
 ## Security
 

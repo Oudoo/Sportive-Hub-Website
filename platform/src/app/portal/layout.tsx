@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { LogoutButton } from "@/components/LogoutButton";
+import { InstallAppButton } from "@/components/pwa/InstallAppButton";
 import { getSessionUser } from "@/lib/auth/session";
 
 /** Patient portal frame. Admins can open it too, to see what patients see. */
@@ -22,7 +23,10 @@ export default async function PortalLayout({ children }: { children: ReactNode }
               Admin
             </Link>
           )}
-          <span className="hidden text-olive sm:inline">{user.fullName}</span>
+          <Link href="/account" className="hidden text-olive underline underline-offset-4 sm:inline">
+            {user.fullName}
+          </Link>
+          <InstallAppButton />
           <LogoutButton />
         </div>
       </header>

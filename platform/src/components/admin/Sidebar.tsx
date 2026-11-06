@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogoutButton } from "@/components/LogoutButton";
+import { InstallAppButton } from "@/components/pwa/InstallAppButton";
 
 const NAV: ReadonlyArray<{ href: string; label: string; exact?: boolean }> = [
   { href: "/admin", label: "Overview", exact: true },
@@ -42,11 +43,14 @@ export function Sidebar({ userName }: { userName: string }) {
         })}
       </nav>
 
-      <div className="mt-auto flex items-center justify-between gap-3 border-t border-milk/20 pt-4 text-sm">
-        <span className="truncate" title={userName}>
+      <div className="mt-auto grid gap-1 border-t border-milk/20 pt-4 text-sm">
+        <Link href="/account" className="truncate text-milk/85 hover:text-milk" title={userName}>
           {userName}
-        </span>
-        <LogoutButton className="text-milk/80 hover:text-milk" />
+        </Link>
+        <div className="flex flex-wrap items-center gap-x-3">
+          <InstallAppButton className="px-0 text-milk/80 hover:text-milk" />
+          <LogoutButton className="px-0 text-milk/80 hover:text-milk" />
+        </div>
       </div>
     </aside>
   );
