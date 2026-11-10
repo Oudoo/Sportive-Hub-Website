@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+/* Sportive Hub brand tokens (Vol.02 "Movement Lab"), shared with the public website. */
+@theme {
+  --color-olive: #595641;
+  --color-sand: #baa48d;
+  --color-milk: #f0ece3;
+  --color-pastel: #c9d6b8;
+  --color-charcoal: #282828;
+  --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-serif: "Instrument Serif", Georgia, "Times New Roman", serif;
+}
+
+body {
+  background-color: var(--color-milk);
+  color: var(--color-charcoal);
+  -webkit-font-smoothing: antialiased;
+}
