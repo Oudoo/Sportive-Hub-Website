@@ -1,10 +1,16 @@
 import type {
   Branch,
+  CheckInMethod,
+  CoursePackStatus,
   LoyaltyReason,
+  PartnerClaimStatus,
+  PartnerOfferKind,
+  PartnerZone,
   PaymentMethod,
   RedemptionStatus,
   ReferralTrigger,
   RewardKind,
+  Role,
   SessionStatus,
   SessionType,
   Tier,
@@ -82,11 +88,13 @@ export const UPDATE_KIND_LABELS: Record<UpdateKind, string> = {
 export const LOYALTY_REASON_LABELS: Record<LoyaltyReason, string> = {
   REFERRAL_BONUS: "Referral bonus",
   WELCOME_BONUS: "Welcome bonus",
+  PAIN_MAP_BONUS: "Movement starter bonus",
   SESSION_ATTENDED: "Session attended",
   MANUAL_ADJUSTMENT: "Adjusted by staff",
   CAMPAIGN_BONUS: "Campaign bonus",
   REWARD_REDEMPTION: "Reward redeemed",
   REDEMPTION_REFUND: "Redemption refunded",
+  REVERSAL: "Undone by staff",
 };
 
 export const TIER_LABELS: Record<Tier, string> = { BRONZE: "Bronze", SILVER: "Silver", GOLD: "Gold" };
@@ -105,13 +113,22 @@ export const REDEMPTION_STATUS_LABELS: Record<RedemptionStatus, string> = {
   PENDING: "Pending",
   FULFILLED: "Fulfilled",
   CANCELLED: "Cancelled",
+  EXPIRED: "Expired",
 };
 
-export const REDEMPTION_STATUS_TONE: Record<RedemptionStatus, "info" | "good" | "neutral"> = {
+export const REDEMPTION_STATUS_TONE: Record<RedemptionStatus, "info" | "good" | "neutral" | "warn"> = {
   PENDING: "info",
   FULFILLED: "good",
   CANCELLED: "neutral",
+  EXPIRED: "warn",
 };
+
+/** "22.09.26", the short form on vouchers and coupons. */
+export function formatShortDate(value: Date | string): string {
+  const d = new Date(value);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getUTCDate())}.${pad(d.getUTCMonth() + 1)}.${String(d.getUTCFullYear()).slice(2)}`;
+}
 
 export const REFERRAL_TRIGGER_LABELS: Record<ReferralTrigger, string> = {
   REGISTRATION: "When the friend signs up",
@@ -131,6 +148,57 @@ export const REFERRAL_PENDING_HINT: Record<ReferralTrigger, string> = {
   REGISTRATION: "Qualifies on sign-up",
   FIRST_SESSION: "Waiting for their first attended session",
   FIRST_PAYMENT: "Waiting for their first paid session",
+};
+
+export const ROLE_LABELS: Record<Role, string> = { ADMIN: "Admin", STAFF: "Staff", PATIENT: "Patient" };
+
+export const COURSE_PACK_STATUS_LABELS: Record<CoursePackStatus, string> = {
+  ACTIVE: "Active",
+  COMPLETED: "Completed",
+  EXPIRED: "Expired",
+  CANCELLED: "Cancelled",
+};
+
+export const PARTNER_ZONE_LABELS: Record<PartnerZone, string> = {
+  SHEIKH_ZAYED: "Sheikh Zayed",
+  ALMAZA_BAY: "Almaza Bay",
+  ALL: "Both branches",
+};
+
+export const PARTNER_KIND_LABELS: Record<PartnerOfferKind, string> = { GIFT: "Gift", DISCOUNT: "Discount" };
+
+export const PARTNER_CLAIM_STATUS_LABELS: Record<PartnerClaimStatus, string> = {
+  ACTIVE: "Ready to use",
+  USED: "Used",
+  EXPIRED: "Expired",
+  CANCELLED: "Cancelled",
+};
+
+export const CHECK_IN_METHOD_LABELS: Record<CheckInMethod, string> = {
+  STAFF_SCAN: "Scanned at the desk",
+  NFC_TAG: "Room tag",
+  QR_SELF: "Room QR",
+  MANUAL: "Typed in",
+  API: "Booking system",
+};
+
+/** Member activity status for the regulars and churn view. */
+export const MEMBER_STATUS_LABELS = {
+  NEW: "New, no visit yet",
+  REGULAR: "Active regular",
+  PACK_LOW: "Pack running low",
+  AT_RISK: "At risk",
+  CHURNED: "Churned",
+} as const;
+
+export type MemberStatus = keyof typeof MEMBER_STATUS_LABELS;
+
+export const MEMBER_STATUS_TONE: Record<MemberStatus, "neutral" | "good" | "warn" | "bad" | "info"> = {
+  NEW: "info",
+  REGULAR: "good",
+  PACK_LOW: "warn",
+  AT_RISK: "warn",
+  CHURNED: "bad",
 };
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
@@ -172,3 +240,32 @@ export function describeReward(reward: { kind: RewardKind; value: number | null 
       return null;
   }
 }
+
+// --- Membership -------------------------------------------------------------------
+
+/** The clinic's WhatsApp number, as on the public website. */
+export const CLINIC_WHATSAPP = "201035555380";
+
+export function clinicWhatsappLink(text: string): string {
+  return `https://wa.me/${CLINIC_WHATSAPP}?text=${encodeURIComponent(text)}`;
+}
+
+/** The areas of the public site's pain map; a member's "focus area". */
+export const FOCUS_AREAS = ["neck", "shoulder", "upper-back", "lower-back", "core", "elbow", "wrist", "hip", "knee", "ankle"] as const;
+export type FocusArea = (typeof FOCUS_AREAS)[number];
+export const FOCUS_AREA_LABELS: Record<FocusArea, string> = {
+  neck: "Neck",
+  shoulder: "Shoulder",
+  "upper-back": "Upper back",
+  "lower-back": "Lower back",
+  core: "Core & pelvis",
+  elbow: "Elbow",
+  wrist: "Wrist & hand",
+  hip: "Hip",
+  knee: "Knee",
+  ankle: "Ankle & foot",
+};
+
+/** Where a passwordless member signed up. */
+export const JOIN_SOURCES = ["join", "website", "painmap", "rewards", "counter", "whatsapp", "qr", "api"] as const;
+export type JoinSource = (typeof JOIN_SOURCES)[number];

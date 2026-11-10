@@ -14,8 +14,11 @@ datasource db {
 // Enums
 // ---------------------------------------------------------------------------
 
+/// ADMIN runs the clinic; STAFF (reception, therapists, coaches) use the scanner,
+/// sessions, patients and vouchers; PATIENT is a member of the programme.
 enum Role {
   ADMIN
+  STAFF
   PATIENT
 }
 
@@ -53,13 +56,15 @@ enum UpdateKind {
 
 /// Why points moved. Every change to a balance has exactly one of these.
 enum LoyaltyReason {
-  REFERRAL_BONUS    // to the referrer: a friend they invited qualified (signed up, or attended their first session)
+  REFERRAL_BONUS    // to the referrer: a friend they invited qualified (paid for, or attended, their first session)
   WELCOME_BONUS     // to the new patient: they signed up with a valid code
+  PAIN_MAP_BONUS    // to a new member who joined from the website's pain map
   SESSION_ATTENDED  // a session was marked COMPLETED
   MANUAL_ADJUSTMENT // an admin added or deducted points by hand
   CAMPAIGN_BONUS    // an admin awarded points to a whole segment (promotion, apology, celebration)
   REWARD_REDEMPTION // points spent on a reward
-  REDEMPTION_REFUND // points returned because a redemption was cancelled
+  REDEMPTION_REFUND // points returned because a redemption was cancelled or expired
+  REVERSAL          // staff undid a scanner action; mirrors the original transaction
 }
 
 /// Membership levels, earned with lifetime points. Spending points never demotes anyone.
@@ -97,6 +102,53 @@ enum RedemptionStatus {
   PENDING   // points taken, voucher issued, not used yet
   FULFILLED // handed over at the front desk
   CANCELLED // points refunded
+  EXPIRED   // not used in time; points refunded
+}
+
+/// Where a voucher came from: spent points, or a completed stamp card.
+enum RedemptionSource {
+  POINTS
+  STAMP_CARD
+}
+
+enum CoursePackStatus {
+  ACTIVE
+  COMPLETED
+  EXPIRED
+  CANCELLED
+}
+
+enum PartnerZone {
+  SHEIKH_ZAYED
+  ALMAZA_BAY
+  ALL
+}
+
+enum PartnerOfferKind {
+  GIFT
+  DISCOUNT
+}
+
+enum PartnerClaimStatus {
+  ACTIVE
+  USED
+  EXPIRED
+  CANCELLED
+}
+
+/// How a visit was registered.
+enum CheckInMethod {
+  STAFF_SCAN  // reception scanned the member's QR
+  NFC_TAG     // the member tapped the tag in a treatment room
+  QR_SELF     // the member opened the room QR with their own phone
+  MANUAL      // typed in by staff
+  API         // sent by a booking system
+}
+
+enum CheckInStatus {
+  PENDING   // the member announced themselves; staff still has to log the session
+  LOGGED    // turned into an attended session
+  DISMISSED // not a visit after all
 }
 
 /// Who did something, for the audit log.
@@ -116,15 +168,19 @@ enum DeliveryStatus {
 // Models
 // ---------------------------------------------------------------------------
 
-/// One table for both roles. Admins are staff; patients are clients.
+/// One table for every role. Admins and staff are the team; patients are members.
 model User {
   id           String  @id @default(cuid())
-  email        String  @unique @db.VarChar(255)
+  /// Sign-in identity for anyone with a password. Members who joined with a phone number
+  /// only (passwordless) have none until they add one.
+  email        String? @unique @db.VarChar(255)
   passwordHash String  @db.VarChar(255) // bcrypt, never returned by the API
   fullName     String  @db.VarChar(120)
   phone        String? @db.VarChar(32)
   role         Role    @default(PATIENT)
   isActive     Boolean @default(true) // false = cannot sign in; records are kept
+  /// Where the account came from: registration, staff, api, painmap, join.
+  joinedVia    String? @db.VarChar(40)
 
   // --- Account security ---------------------------------------------------
   /// Bumped on password change or "sign out everywhere"; tokens carrying an older number are rejected.
@@ -139,14 +195,28 @@ model User {
   totpEnabledAt  DateTime?
   recoveryCodes  RecoveryCode[]
 
+  // --- Membership card ----------------------------------------------------
+  /// What the member's QR encodes (SHM-XXXXXXXX): identifies them at the desk, never signs them in.
+  memberCode String @unique @db.VarChar(16)
+  /// Body area chosen on the website's pain map, so the therapist sees it on the first scan.
+  focusArea       String?  @db.VarChar(40)
+  preferredBranch Branch?
+  /// Visits stamped on the current card (0..stampCardSize). Completing a card issues a voucher.
+  stampCount          Int       @default(0)
+  stampCardsCompleted Int       @default(0)
+  /// When the member last attended a session; drives the regulars and churn-risk views.
+  lastVisitAt         DateTime?
+  /// The Google Wallet object id once the member saved their pass.
+  googleWalletObjectId String? @db.VarChar(120)
+
   // --- Referral programme -------------------------------------------------
-  /// Shareable code in the form SPORT-XXXXXX. Only patients get one; admins have null.
+  /// Shareable code in the form SPORT-XXXXXX. Only patients get one; the team has null.
   referralCode String? @unique @db.VarChar(16)
   /// The patient whose code was used when this account was created.
   referredById String?
   referredBy   User?   @relation("Referrals", fields: [referredById], references: [id], onDelete: SetNull)
   referrals    User[]  @relation("Referrals")
-  /// Set when this user's referrer was paid for them (sign-up or first attended session, per settings).
+  /// Set when this user's referrer was paid for them (sign-up, first session or first payment, per settings).
   referralQualifiedAt DateTime?
   /// How many times this user's /r/CODE link was opened.
   referralClicks      Int       @default(0)
@@ -168,6 +238,10 @@ model User {
   authoredUpdates     Update[]
   redemptions         Redemption[]         @relation("RedemptionUser")
   handledRedemptions  Redemption[]         @relation("RedemptionHandler")
+  coursePacks         CoursePack[]
+  partnerClaims       PartnerClaim[]
+  checkIns            CheckIn[]
+  pushSubscriptions   PushSubscription[]
   apiKeys             ApiKey[]
   webhooks            Webhook[]
   auditLogs           AuditLog[]
@@ -179,6 +253,8 @@ model User {
   @@index([referredById])
   @@index([role, createdAt])
   @@index([role, lifetimePoints])
+  @@index([phone])
+  @@index([role, lastVisitAt])
 }
 
 /// One-time backup codes for two-factor sign-in. Stored hashed; a used code keeps its row with usedAt set.
@@ -220,6 +296,13 @@ model Session {
   amountPaid    Int?
   paymentMethod PaymentMethod?
 
+  /// The prepaid course this session was taken from, if any. Completing it uses one of the pack's sessions.
+  coursePackId String?
+  coursePack   CoursePack? @relation(fields: [coursePackId], references: [id], onDelete: SetNull)
+  /// How the visit was registered, when it came through the scanner or a room tag.
+  checkInMethod CheckInMethod?
+  roomNumber    Int?
+
   /// Id of the same appointment in an external system (ClinicMind etc.), so syncs are idempotent.
   externalSource String? @db.VarChar(40)
   externalId     String? @db.VarChar(120)
@@ -231,6 +314,56 @@ model Session {
   @@index([patientId, startsAt])
   @@index([status, startsAt])
   @@index([paidAt])
+  @@index([coursePackId])
+}
+
+/// A sellable course of sessions (e.g. "Physiotherapy, single area, 6 sessions"). Edited by admins.
+model PackageTemplate {
+  id          String      @id @default(cuid())
+  name        String      @db.VarChar(120)
+  type        SessionType
+  sessions    Int
+  priceEgp    Int?
+  description String?     @db.VarChar(255)
+  isActive    Boolean     @default(true)
+  sortOrder   Int         @default(0)
+
+  packs CoursePack[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+/// A prepaid course a member bought. Each completed session taken from it uses one; at zero it completes.
+model CoursePack {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  templateId String?
+  template   PackageTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  /// Snapshot of the template's name, so renaming it later does not rewrite history.
+  name          String           @db.VarChar(120)
+  type          SessionType
+  totalSessions Int
+  usedSessions  Int              @default(0)
+  priceEgp      Int?
+  paidAt        DateTime?
+  paymentMethod PaymentMethod?
+  status        CoursePackStatus @default(ACTIVE)
+  purchasedAt   DateTime         @default(now())
+  expiresAt     DateTime?
+  notes         String?          @db.VarChar(255)
+  createdById   String?
+
+  sessions Session[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, status])
 }
 
 /// Announcements, platform updates and health tips posted by staff.
@@ -265,6 +398,8 @@ model LoyaltyTransaction {
   /// The admin who made a manual change. Null when the system awarded the points.
   actorId     String?
   actor       User?         @relation("TransactionActor", fields: [actorId], references: [id], onDelete: SetNull)
+  /// Set when a staff undo reversed this transaction (a REVERSAL row points back here via referenceId).
+  undoneAt    DateTime?
 
   createdAt DateTime @default(now())
 
@@ -284,6 +419,8 @@ model LoyaltySettings {
   /// To the referrer, when the friend qualifies.
   referralPoints  Int             @default(50)
   referralTrigger ReferralTrigger @default(FIRST_PAYMENT)
+  /// To a new member who joined from the website's pain map (stacks with the welcome bonus).
+  painMapPoints   Int             @default(15)
 
   /// Lifetime points needed for each tier. Bronze starts at 0.
   silverMin Int @default(300)
@@ -296,6 +433,17 @@ model LoyaltySettings {
   promoLabel             String?   @db.VarChar(80)
   promoMultiplierPercent Int       @default(100)
   promoEndsAt            DateTime?
+
+  /// The stamp card: every attended session adds a stamp; a full card issues the reward below and resets.
+  stampCardSize Int     @default(8)
+  /// The reward issued (as a free voucher) when a card completes. Null = the card is just a visual.
+  stampRewardId String? @db.VarChar(32)
+
+  /// Vouchers not used within this many days expire and the points come back.
+  voucherValidityDays Int @default(30)
+  /// Days without a visit before a member counts as at risk, then as churned.
+  atRiskDays Int @default(14)
+  churnDays  Int @default(30)
 
   updatedAt DateTime @updatedAt
 }
@@ -337,8 +485,11 @@ model Redemption {
   /// Snapshot, so renaming a reward later does not rewrite history.
   rewardName  String           @db.VarChar(120)
   pointsSpent Int
+  source      RedemptionSource @default(POINTS)
   status      RedemptionStatus @default(PENDING)
   note        String?          @db.VarChar(255)
+  /// After this moment an unused voucher expires (and the points come back).
+  expiresAt   DateTime?
 
   handledById String?
   handledBy   User?     @relation("RedemptionHandler", fields: [handledById], references: [id], onDelete: SetNull)
@@ -350,6 +501,90 @@ model Redemption {
 
   @@index([status, createdAt])
   @@index([userId, createdAt])
+  @@index([status, expiresAt])
+}
+
+/// A perk from a neighbouring business (café, padel club, apparel) shown in the member's wallet.
+model PartnerOffer {
+  id          String           @id @default(cuid())
+  partnerName String           @db.VarChar(120)
+  zone        PartnerZone      @default(ALL)
+  kind        PartnerOfferKind @default(DISCOUNT)
+  title       String           @db.VarChar(120)
+  /// Short label on the card, e.g. "-15%" or "Free".
+  badge       String?          @db.VarChar(24)
+  description String?          @db.VarChar(500)
+  terms       String?          @db.VarChar(500)
+  /// An emoji or icon key used as the card's illustration.
+  emoji       String?          @db.VarChar(16)
+  url         String?          @db.VarChar(500)
+  minTier     Tier             @default(BRONZE)
+  isActive    Boolean          @default(true)
+  sortOrder   Int              @default(0)
+  validUntil  DateTime?
+
+  claims PartnerClaim[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+/// A member's coupon for a partner offer: one per member per offer, with a code the partner checks.
+model PartnerClaim {
+  id   String @id @default(cuid())
+  code String @unique @db.VarChar(16)
+
+  offerId String
+  offer   PartnerOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  userId  String
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  status    PartnerClaimStatus @default(ACTIVE)
+  expiresAt DateTime?
+  usedAt    DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@unique([offerId, userId])
+  @@index([userId, createdAt])
+}
+
+/// A member announcing their arrival (room tag or self QR). Staff turn it into a session from the scanner feed.
+model CheckIn {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  branch     Branch        @default(SHEIKH_ZAYED)
+  roomNumber Int?
+  method     CheckInMethod @default(NFC_TAG)
+  status     CheckInStatus @default(PENDING)
+  sessionId  String?       @db.VarChar(32)
+  resolvedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([status, createdAt])
+  @@index([userId, createdAt])
+}
+
+/// A browser or installed app that agreed to receive push notifications.
+model PushSubscription {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  endpoint  String  @unique @db.VarChar(500)
+  p256dh    String  @db.VarChar(255)
+  auth      String  @db.VarChar(255)
+  userAgent String? @db.VarChar(255)
+
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+
+  @@index([userId])
 }
 
 /// Who did what, when, from where. Written for sign-ins, admin changes and integration calls.

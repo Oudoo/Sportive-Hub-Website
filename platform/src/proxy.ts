@@ -10,7 +10,8 @@ import { clientIp } from "@/lib/security/request";
  * 1. Refuses oversized API bodies and rate-limits API calls per IP.
  * 2. Blocks cross-site state-changing API calls that ride on the session cookie (CSRF).
  * 3. Sends signed-out visitors of /admin, /portal and /account to the login page.
- * 4. Keeps patients out of /admin and /api/admin.
+ * 4. Keeps patients out of /admin and /api/admin (staff and admins get in; admin-only
+ *    pages check the role again themselves).
  * 5. Adds a per-request Content-Security-Policy nonce to every page.
  *
  * It only verifies the token's signature and expiry. Route handlers and pages
@@ -66,6 +67,7 @@ function isCrossSiteCookieRequest(request: NextRequest): boolean {
  * the request header and attaches it to its own scripts, so only scripts we ship can run.
  * Styles allow 'unsafe-inline' because React's inline style props and Tailwind's
  * runtime-free CSS are harmless, and Google Fonts serve the display typeface.
+ * The camera (scanner page) is allowed only for this origin.
  */
 function contentSecurityPolicy(nonce: string, https: boolean): string {
   return [
@@ -74,6 +76,7 @@ function contentSecurityPolicy(nonce: string, https: boolean): string {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com data:",
     "img-src 'self' data: blob:",
+    "media-src 'self' blob:",
     "connect-src 'self'",
     "manifest-src 'self'",
     "worker-src 'self'",
@@ -106,9 +109,9 @@ export async function proxy(request: NextRequest) {
     if (isCrossSiteCookieRequest(request)) return json(403, "Cross-site request blocked");
   }
 
-  const needsAdmin = pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
+  const needsTeam = pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
   const needsUser =
-    needsAdmin || pathname.startsWith("/portal") || pathname.startsWith("/account") || pathname.startsWith("/api/me");
+    needsTeam || pathname.startsWith("/portal") || pathname.startsWith("/account") || pathname.startsWith("/api/me");
 
   if (needsUser) {
     const token = request.cookies.get(SESSION_COOKIE)?.value ?? bearerToken(request);
@@ -117,12 +120,12 @@ export async function proxy(request: NextRequest) {
     if (!claims) {
       if (isApi) return json(401, "Sign in required");
       const login = new URL("/login", publicOrigin(request));
-      login.searchParams.set("next", pathname);
+      login.searchParams.set("next", pathname + request.nextUrl.search);
       return NextResponse.redirect(login);
     }
 
-    if (needsAdmin && claims.role !== "ADMIN") {
-      if (isApi) return json(403, "Admin access required");
+    if (needsTeam && claims.role === "PATIENT") {
+      if (isApi) return json(403, "Staff access required");
       return NextResponse.redirect(new URL("/portal", publicOrigin(request)));
     }
   }

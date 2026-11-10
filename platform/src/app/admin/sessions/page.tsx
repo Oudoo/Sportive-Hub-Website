@@ -5,8 +5,9 @@ import { SessionPaymentControl } from "@/components/admin/SessionPaymentControl"
 import { SessionStatusControl } from "@/components/admin/SessionStatusControl";
 import { Badge, Card, Empty, PageTitle, Table, Td, Th } from "@/components/ui";
 import { prisma } from "@/lib/db";
-import { BRANCH_LABELS, REFERRAL_TRIGGER_PHRASE, SESSION_TYPE_LABELS, formatDateTime } from "@/lib/format";
+import { BRANCH_LABELS, CHECK_IN_METHOD_LABELS, REFERRAL_TRIGGER_PHRASE, SESSION_TYPE_LABELS, formatDateTime } from "@/lib/format";
 import { getSettings } from "@/lib/loyalty";
+import { requireStaffPage } from "@/lib/auth/page";
 import { listSessions } from "@/lib/services/sessions";
 import { sessionsQuerySchema } from "@/lib/validation";
 
@@ -21,6 +22,7 @@ const FILTERS = [
 ] as const;
 
 export default async function SessionsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  await requireStaffPage("/admin/sessions");
   const raw = await searchParams;
   const parsed = sessionsQuerySchema.safeParse(raw);
   const query = parsed.success ? parsed.data : sessionsQuerySchema.parse({});
@@ -29,7 +31,7 @@ export default async function SessionsPage({ searchParams }: { searchParams: Pro
     listSessions(query),
     prisma.user.findMany({
       where: { role: "PATIENT", isActive: true },
-      select: { id: true, fullName: true, email: true },
+      select: { id: true, fullName: true, email: true, memberCode: true },
       orderBy: { fullName: "asc" },
     }),
     getSettings(),
@@ -40,7 +42,7 @@ export default async function SessionsPage({ searchParams }: { searchParams: Pro
 
   return (
     <>
-      <PageTitle lede={`Book, reschedule, close out and record payment for sessions. A referred patient's referrer is paid ${REFERRAL_TRIGGER_PHRASE[settings.referralTrigger]}.`}>
+      <PageTitle lede={`Book, reschedule, close out and record payment for sessions. Walk-ins are quicker from the scanner. A referred patient's referrer is paid ${REFERRAL_TRIGGER_PHRASE[settings.referralTrigger]}.`}>
         Sessions
       </PageTitle>
 
@@ -96,9 +98,11 @@ export default async function SessionsPage({ searchParams }: { searchParams: Pro
                     <Td>
                       {SESSION_TYPE_LABELS[s.type]}
                       {s.title && <div className="text-xs text-olive">{s.title}</div>}
-                      {s.isComplimentary && (
-                        <div className="mt-1">
-                          <Badge tone="good">Reward</Badge>
+                      {(s.isComplimentary || s.coursePack || s.checkInMethod) && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {s.isComplimentary && <Badge tone="good">Reward</Badge>}
+                          {s.coursePack && <Badge tone="info">Pack · {s.coursePack.usedSessions}/{s.coursePack.totalSessions}</Badge>}
+                          {s.checkInMethod && <Badge tone="neutral">{CHECK_IN_METHOD_LABELS[s.checkInMethod]}{s.roomNumber ? ` · room ${s.roomNumber}` : ""}</Badge>}
                         </div>
                       )}
                     </Td>
@@ -106,7 +110,7 @@ export default async function SessionsPage({ searchParams }: { searchParams: Pro
                       <SessionStatusControl id={s.id} status={s.status} />
                     </Td>
                     <Td>
-                      <SessionPaymentControl id={s.id} paidAt={s.paidAt?.toISOString() ?? null} amountPaid={s.amountPaid} paymentMethod={s.paymentMethod} isComplimentary={s.isComplimentary} />
+                      <SessionPaymentControl id={s.id} paidAt={s.paidAt?.toISOString() ?? null} amountPaid={s.amountPaid} paymentMethod={s.paymentMethod} isComplimentary={s.isComplimentary || !!s.coursePackId} />
                     </Td>
                   </tr>
                 ))}

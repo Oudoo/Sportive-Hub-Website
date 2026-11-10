@@ -145,6 +145,14 @@ footer{border-top:1px solid var(--rule);padding:1.4rem var(--gutter-r) 1.6rem va
   .hot i::after{animation:none}
   .hot i,.btn svg,.hot .tip{transition:none}
 }
+
+/* Rewards hook under each plan */
+.track{margin-top:18px;padding:18px 20px;border:1px solid var(--olive);border-radius:4px;background:var(--pastel)}
+.track h3{margin:0 0 6px;font-size:20px;font-weight:500;letter-spacing:-.01em}
+.track h3 em{font-family:var(--serif);font-style:italic;font-weight:400}
+.track p{margin:0 0 12px;font-size:14px;color:var(--olive)}
+.track .btn{background:var(--olive);color:var(--milk);border-color:var(--olive)}
+.track .btn:hover{background:var(--charcoal);border-color:var(--charcoal)}
 </style>
 </head>
 <body>
@@ -304,6 +312,7 @@ footer{border-top:1px solid var(--rule);padding:1.4rem var(--gutter-r) 1.6rem va
 
   function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
   function waLink(text){ return 'https://wa.me/201035555380?text=' + encodeURIComponent(text); }
+  var JOIN_URL = 'https://admin.sportive-hub.com/join';
 
   ORDER.forEach(function(id){
     var li = document.createElement('li');
@@ -327,7 +336,9 @@ footer{border-top:1px solid var(--rule);padding:1.4rem var(--gutter-r) 1.6rem va
       '<div class="flags"><h3>Stop and get it checked if</h3><ul>' + flags.map(function(f){ return '<li>' + esc(f) + '</li>'; }).join('') + '</ul></div>' +
       '<div class="hub"><h3>Still sore after <em>two</em> weeks?</h3><p>A physiotherapist at Sportive Hub will find what\'s driving your ' + esc(where) + ' pain and build the plan from there.</p>' +
         '<ul>' + d.hub.map(function(h){ return '<li>' + esc(h) + '</li>'; }).join('') + '</ul>' +
-        '<a class="btn milk" target="_blank" rel="noopener" href="' + waLink('Hi Sportive Hub, I have pain in my ' + where + ' and I\'d like to book an assessment.') + '">Book a ' + esc((d.short || d.name).toLowerCase()) + ' assessment <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></div>';
+        '<a class="btn milk" target="_blank" rel="noopener" href="' + waLink('Hi Sportive Hub, I have pain in my ' + where + ' and I\'d like to book an assessment.') + '">Book a ' + esc((d.short || d.name).toLowerCase()) + ' assessment <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></div>' +
+      '<div class="track"><h3>Track your recovery &amp; earn <em>+15</em> points</h3><p>Join Sportive Hub rewards with your mobile number: your ' + esc(d.name.toLowerCase()) + ' plan is saved to your wallet, you start with a movement bonus, and every visit adds points and a stamp.</p>' +
+        '<a class="btn" href="' + JOIN_URL + '?source=painmap&focus=' + encodeURIComponent(id) + '">Save my plan &amp; join rewards <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></div>';
     navBook.href = waLink('Hi Sportive Hub, I have pain in my ' + where + ' and I\'d like to book an assessment.');
     if (window.SHAnim) SHAnim.mountAll(areaEl);
   }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireAdminPage } from "@/lib/auth/page";
 import Link from "next/link";
 import { Badge, Card, Empty, PageTitle, Stat, Table, Td, Th } from "@/components/ui";
 import { getSecuritySummary } from "@/lib/services/audit";
@@ -7,6 +8,7 @@ import { getOverview } from "@/lib/services/overview";
 export const metadata: Metadata = { title: "Overview" };
 
 export default async function OverviewPage() {
+  await requireAdminPage("/admin");
   const [data, security] = await Promise.all([getOverview(), getSecuritySummary()]);
 
   return (

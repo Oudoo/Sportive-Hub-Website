@@ -10,6 +10,7 @@ import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient, type LoyaltyReason } from "../src/generated/prisma/client";
+import { generateMemberCode } from "../src/lib/member";
 import { generateReferralCode } from "../src/lib/referral";
 
 const prisma = new PrismaClient({ adapter: new PrismaMariaDb(requireEnv("DATABASE_URL")) });
@@ -35,6 +36,8 @@ async function ensureAdmin() {
       passwordHash: await bcrypt.hash(password, 12),
       fullName: process.env.ADMIN_NAME || "Sportive Hub Admin",
       role: "ADMIN",
+      memberCode: generateMemberCode(),
+      joinedVia: "seed",
     },
   });
   console.log(`Created admin ${email}.`);
@@ -43,6 +46,34 @@ async function ensureAdmin() {
 /** The settings row with its defaults (from the schema), created once. */
 async function ensureSettings() {
   await prisma.loyaltySettings.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } });
+}
+
+/**
+ * The course packs the front desk can sell, from the clinic's public price list.
+ * Created once when there are no templates yet; edit prices and names in the dashboard.
+ */
+async function ensurePackageTemplates() {
+  if ((await prisma.packageTemplate.count()) > 0) return;
+  await prisma.packageTemplate.createMany({
+    data: [
+      { name: "Physiotherapy · single area · 6 sessions", type: "PHYSIOTHERAPY", sessions: 6, priceEgp: 4999, sortOrder: 10 },
+      { name: "Physiotherapy · single area · 12 sessions", type: "PHYSIOTHERAPY", sessions: 12, priceEgp: 8999, sortOrder: 11 },
+      { name: "Physiotherapy · two areas · 6 sessions", type: "PHYSIOTHERAPY", sessions: 6, priceEgp: 7499, sortOrder: 12 },
+      { name: "Physiotherapy · two areas · 12 sessions", type: "PHYSIOTHERAPY", sessions: 12, priceEgp: 13499, sortOrder: 13 },
+      { name: "EMS · 4 sessions", type: "EMS", sessions: 4, priceEgp: 2599, sortOrder: 20 },
+      { name: "EMS · 8 sessions", type: "EMS", sessions: 8, priceEgp: 4799, sortOrder: 21 },
+      { name: "EMS · 12 sessions", type: "EMS", sessions: 12, priceEgp: 6599, sortOrder: 22 },
+      { name: "EMS · 24 sessions", type: "EMS", sessions: 24, priceEgp: 11999, sortOrder: 23 },
+      { name: "Lymphatic drainage · 6 for 5", type: "LYMPHATIC_DRAINAGE", sessions: 6, priceEgp: 7500, description: "Pay for five 60-minute sessions, get six.", sortOrder: 30 },
+      { name: "Lymphatic drainage · 12 for 9", type: "LYMPHATIC_DRAINAGE", sessions: 12, priceEgp: 13500, description: "Pay for nine 60-minute sessions, get twelve.", sortOrder: 31 },
+      { name: "Women's health · 6 sessions", type: "WOMENS_HEALTH", sessions: 6, priceEgp: 10000, sortOrder: 40 },
+      { name: "Women's health · 12 sessions", type: "WOMENS_HEALTH", sessions: 12, priceEgp: 18000, sortOrder: 41 },
+      { name: "Psychiatry · 4 sessions", type: "PSYCHIATRY", sessions: 4, priceEgp: 8000, sortOrder: 50 },
+      { name: "Psychiatry · 6 sessions", type: "PSYCHIATRY", sessions: 6, priceEgp: 11000, sortOrder: 51 },
+      { name: "Psychiatry · 8 sessions", type: "PSYCHIATRY", sessions: 8, priceEgp: 14000, sortOrder: 52 },
+    ],
+  });
+  console.log("Created the course pack templates from the price list.");
 }
 
 /** A starter catalogue, only when the clinic has not created any rewards yet. Edit freely in the dashboard. */
@@ -91,6 +122,8 @@ async function seedDemo() {
     passwordHash,
     role: "PATIENT" as const,
     referralCode: generateReferralCode(),
+    memberCode: generateMemberCode(),
+    joinedVia: "seed",
   });
 
   const mariam = await prisma.user.create({ data: patient("Mariam Adel", "mariam@example.com", "+201000000001") });
@@ -128,6 +161,33 @@ async function seedDemo() {
     ],
   });
 
+  // A course pack in progress, so the wallet and the scanner have one to show.
+  const emsPack = await prisma.packageTemplate.findFirst({ where: { type: "EMS", sessions: 8 } });
+  await prisma.coursePack.create({
+    data: {
+      userId: mariam.id,
+      templateId: emsPack?.id,
+      name: emsPack?.name ?? "EMS · 8 sessions",
+      type: "EMS",
+      totalSessions: 8,
+      usedSessions: 3,
+      priceEgp: emsPack?.priceEgp ?? 4799,
+      paidAt: new Date(now - 20 * day),
+      expiresAt: new Date(now + 160 * day),
+    },
+  });
+
+  // Partner perks for the "My gifts & discounts" shelf. Placeholders: replace with real partners.
+  if ((await prisma.partnerOffer.count()) === 0) {
+    await prisma.partnerOffer.createMany({
+      data: [
+        { partnerName: "Demo Café", zone: "SHEIKH_ZAYED", kind: "DISCOUNT", title: "15% off any drink", badge: "-15%", emoji: "☕", description: "Show your coupon at the counter after a session.", terms: "One coupon per visit. Not valid with other offers.", sortOrder: 10 },
+        { partnerName: "Demo Sportswear", zone: "ALL", kind: "DISCOUNT", title: "10% off in store", badge: "-10%", emoji: "👟", description: "For Sportive Hub members, on full-price items.", minTier: "SILVER", sortOrder: 20 },
+        { partnerName: "Demo Juice Bar", zone: "ALMAZA_BAY", kind: "GIFT", title: "A free recovery smoothie", badge: "Free", emoji: "🥤", description: "One smoothie on the house after your session.", minTier: "GOLD", sortOrder: 30 },
+      ],
+    });
+  }
+
   const admin = await prisma.user.findFirst({ where: { role: "ADMIN" }, select: { id: true } });
   await prisma.update.create({
     data: {
@@ -146,6 +206,7 @@ async function main() {
   await ensureAdmin();
   await ensureSettings();
   await ensureRewards();
+  await ensurePackageTemplates();
   await seedDemo();
 }
 

@@ -20,6 +20,7 @@ export function PatientSecurity({ patientId, firstName, twoFactorOn, lockedUntil
   const [pending, setPending] = useState<string | null>(null);
   const [message, setMessage] = useState<{ tone: "good" | "bad"; text: string } | null>(null);
   const [invite, setInvite] = useState<string | null>(null);
+  const [walletLink, setWalletLink] = useState<string | null>(null);
 
   const locked = lockedUntil !== null && new Date(lockedUntil) > new Date();
 
@@ -53,6 +54,15 @@ export function PatientSecurity({ patientId, firstName, twoFactorOn, lockedUntil
   }
 
   const whatsapp = invite ? `https://wa.me/?text=${encodeURIComponent(`Hi ${firstName}, here is your Sportive Hub sign-in link. Open it to set your password: ${invite}`)}` : null;
+  const walletWhatsapp = walletLink ? `https://wa.me/?text=${encodeURIComponent(`Hi ${firstName}, here is your Sportive Hub rewards wallet. Open it, add it to your home screen, and show the QR at the desk on every visit: ${walletLink}`)}` : null;
+
+  function createWalletLink() {
+    run("wallet", async () => {
+      const result = await api<{ url: string }>(`/api/admin/patients/${patientId}/member-link`, { method: "POST" });
+      setWalletLink(result.url);
+      return "Wallet link created. It opens the wallet without a password and lasts a year.";
+    });
+  }
 
   return (
     <div className="grid gap-4 text-sm">
@@ -65,6 +75,27 @@ export function PatientSecurity({ patientId, firstName, twoFactorOn, lockedUntil
       </div>
 
       <div className="grid gap-2">
+        <div className="text-xs uppercase tracking-[0.12em] text-olive">Wallet link</div>
+        <p className="text-olive">Opens {firstName}&apos;s wallet on their phone, no password. Send it on WhatsApp when they join, or again if they lost it.</p>
+        {walletLink && (
+          <div className="grid gap-2">
+            <Code>{walletLink}</Code>
+            <div className="flex flex-wrap gap-2">
+              <CopyButton value={walletLink} label="Copy link" />
+              {walletWhatsapp && (
+                <a className="inline-flex min-h-10 items-center rounded-sm border border-charcoal/40 px-4 text-xs font-medium uppercase tracking-[0.12em] hover:border-charcoal" href={walletWhatsapp} target="_blank" rel="noopener">
+                  Send on WhatsApp
+                </a>
+              )}
+            </div>
+          </div>
+        )}
+        <Button variant="secondary" onClick={createWalletLink} disabled={pending !== null} className="justify-self-start">
+          {pending === "wallet" ? "Creating…" : walletLink ? "Create another wallet link" : "Create wallet link"}
+        </Button>
+      </div>
+
+      <div className="grid gap-2 border-t border-charcoal/10 pt-4">
         <div className="text-xs uppercase tracking-[0.12em] text-olive">Sign-in link / password reset</div>
         <p className="text-olive">Creates a one-time link where {firstName} sets a new password. Send it on WhatsApp.</p>
         {invite && (

@@ -6,7 +6,7 @@ import { api, ApiError } from "@/components/api";
 import { Alert, Button, Field, Input, Select, Textarea } from "@/components/ui";
 import { BRANCH_LABELS, PAYMENT_METHOD_LABELS, SESSION_TYPE_LABELS } from "@/lib/format";
 
-export type PatientOption = { id: string; fullName: string; email: string };
+export type PatientOption = { id: string; fullName: string; email: string | null; memberCode: string };
 
 /** Local date-time string for the input's default: the next full hour. */
 function nextHourLocal(): string {
@@ -74,7 +74,7 @@ export function AddSessionForm({ patients }: { patients: PatientOption[] }) {
           </option>
           {patients.map((p) => (
             <option key={p.id} value={p.id}>
-              {p.fullName} · {p.email}
+              {p.fullName} · {p.email ?? p.memberCode}
             </option>
           ))}
         </Select>

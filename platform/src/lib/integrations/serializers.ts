@@ -17,9 +17,14 @@ export function patientPayload(user: SafeUser, settings: LoyaltySettings) {
     referralCode: user.referralCode,
     referredById: user.referredById,
     referralQualifiedAt: user.referralQualifiedAt,
+    memberCode: user.memberCode,
     loyaltyPoints: user.loyaltyPoints,
     lifetimePoints: user.lifetimePoints,
     tier: getTier(user.lifetimePoints, settings).key,
+    stampCount: user.stampCount,
+    lastVisitAt: user.lastVisitAt,
+    focusArea: user.focusArea,
+    preferredBranch: user.preferredBranch,
     externalSource: user.externalSource,
     externalId: user.externalId,
     createdAt: user.createdAt,
@@ -27,7 +32,8 @@ export function patientPayload(user: SafeUser, settings: LoyaltySettings) {
 }
 
 export type SessionPayloadInput = Session & {
-  patient: { id: string; fullName: string; email: string; externalSource?: string | null; externalId?: string | null };
+  patient: { id: string; fullName: string; email: string | null; memberCode?: string; externalSource?: string | null; externalId?: string | null };
+  coursePack?: { id: string; name: string; totalSessions: number; usedSessions: number; status: string } | null;
 };
 
 export function sessionPayload(session: SessionPayloadInput) {
@@ -38,6 +44,7 @@ export function sessionPayload(session: SessionPayloadInput) {
       id: session.patient.id,
       fullName: session.patient.fullName,
       email: session.patient.email,
+      memberCode: session.patient.memberCode ?? null,
       externalSource: session.patient.externalSource ?? null,
       externalId: session.patient.externalId ?? null,
     },
@@ -50,6 +57,12 @@ export function sessionPayload(session: SessionPayloadInput) {
     status: session.status,
     notes: session.notes,
     isComplimentary: session.isComplimentary,
+    coursePackId: session.coursePackId,
+    coursePack: session.coursePack
+      ? { id: session.coursePack.id, name: session.coursePack.name, totalSessions: session.coursePack.totalSessions, usedSessions: session.coursePack.usedSessions, status: session.coursePack.status }
+      : null,
+    checkInMethod: session.checkInMethod,
+    roomNumber: session.roomNumber,
     pointsAwardedAt: session.pointsAwardedAt,
     paidAt: session.paidAt,
     amountPaid: session.amountPaid,
@@ -74,20 +87,22 @@ export function pointsPayload(patientId: string, result: PointsResult) {
   };
 }
 
-export type RedemptionPayloadInput = Redemption & { user?: { id: string; fullName: string; email: string } | null };
+export type RedemptionPayloadInput = Redemption & { user?: { id: string; fullName: string; email: string | null; memberCode?: string } | null };
 
 export function redemptionPayload(redemption: RedemptionPayloadInput) {
   return {
     id: redemption.id,
     code: redemption.code,
     patientId: redemption.userId,
-    patient: redemption.user ? { id: redemption.user.id, fullName: redemption.user.fullName, email: redemption.user.email } : undefined,
+    patient: redemption.user ? { id: redemption.user.id, fullName: redemption.user.fullName, email: redemption.user.email, memberCode: redemption.user.memberCode ?? null } : undefined,
     rewardId: redemption.rewardId,
     rewardName: redemption.rewardName,
     pointsSpent: redemption.pointsSpent,
+    source: redemption.source,
     status: redemption.status,
     note: redemption.note,
     createdAt: redemption.createdAt,
+    expiresAt: redemption.expiresAt,
     fulfilledAt: redemption.fulfilledAt,
     cancelledAt: redemption.cancelledAt,
   };

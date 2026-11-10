@@ -5,13 +5,14 @@ import { usePathname } from "next/navigation";
 import { cx } from "@/components/ui";
 
 const NAV = [
-  { href: "/portal", label: "Home", exact: true },
+  { href: "/portal/wallet", label: "Wallet" },
+  { href: "/portal", label: "Overview", exact: true },
   { href: "/portal/rewards", label: "Rewards" },
   { href: "/portal/refer", label: "Refer & earn" },
   { href: "/portal/activity", label: "Activity" },
 ];
 
-/** Patient portal sections, as a bar under the header. */
+/** Member portal sections, as a bar under the header. */
 export function PortalNav({ pendingVouchers }: { pendingVouchers: number }) {
   const pathname = usePathname();
   return (
@@ -29,7 +30,7 @@ export function PortalNav({ pendingVouchers }: { pendingVouchers: number }) {
             )}
           >
             {item.label}
-            {item.href === "/portal/rewards" && pendingVouchers > 0 && (
+            {item.href === "/portal/wallet" && pendingVouchers > 0 && (
               <span className="ml-1.5 rounded-full bg-olive px-1.5 text-[10px] text-milk">{pendingVouchers}</span>
             )}
           </Link>

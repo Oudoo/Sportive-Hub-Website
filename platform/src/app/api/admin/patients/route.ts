@@ -1,4 +1,4 @@
-import { requireAdmin } from "@/lib/auth/session";
+import { requireStaff } from "@/lib/auth/session";
 import { ok, parseJson, parseQuery, route } from "@/lib/http";
 import { userContext } from "@/lib/security/context";
 import { createInviteLink } from "@/lib/services/auth";
@@ -7,7 +7,7 @@ import { patientsQuerySchema, v1PatientUpsertSchema } from "@/lib/validation";
 
 /** GET /api/admin/patients?q=&page=&perPage= — searchable, paginated patient list. */
 export const GET = route(async (request) => {
-  await requireAdmin();
+  await requireStaff();
   const query = parseQuery(request.nextUrl, patientsQuerySchema);
   return ok(await listPatients(query));
 });
@@ -19,7 +19,7 @@ export const GET = route(async (request) => {
  * they use to set their own password. Send it on WhatsApp.
  */
 export const POST = route(async (request) => {
-  const admin = await requireAdmin();
+  const admin = await requireStaff();
   const input = await parseJson(request, v1PatientUpsertSchema);
   const ctx = userContext(admin, request);
   const { patient, created } = await upsertPatient(input, ctx);

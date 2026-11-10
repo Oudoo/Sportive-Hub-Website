@@ -14,7 +14,7 @@ import { getEnv } from "@/lib/env";
  */
 
 /** Kept as a plain union (not the Prisma enum) so proxy.ts does not pull in the database client. */
-export type SessionRole = "ADMIN" | "PATIENT";
+export type SessionRole = "ADMIN" | "STAFF" | "PATIENT";
 
 export type SessionClaims = {
   /** User id */
@@ -32,17 +32,24 @@ const ISSUER = "sportive-hub";
 /** 7 days. Long enough for a clinic front desk, short enough that a lost phone expires. */
 export const SESSION_TTL_SECONDS = 7 * 24 * 60 * 60;
 
+/**
+ * 180 days, for members who open their wallet from the link the clinic sent them: the
+ * wallet has to just open at the desk. Only patient accounts get it, and "sign out
+ * everywhere" still ends it at once.
+ */
+export const MEMBER_SESSION_TTL_SECONDS = 180 * 24 * 60 * 60;
+
 function secretKey(): Uint8Array {
   return new TextEncoder().encode(getEnv().AUTH_SECRET);
 }
 
-export async function signSessionToken(claims: SessionClaims): Promise<string> {
+export async function signSessionToken(claims: SessionClaims, ttlSeconds = SESSION_TTL_SECONDS): Promise<string> {
   return new SignJWT({ role: claims.role, name: claims.name, sv: claims.sv })
     .setProtectedHeader({ alg: ALGORITHM })
     .setSubject(claims.sub)
     .setIssuer(ISSUER)
     .setIssuedAt()
-    .setExpirationTime(`${SESSION_TTL_SECONDS}s`)
+    .setExpirationTime(`${ttlSeconds}s`)
     .sign(secretKey());
 }
 
@@ -61,7 +68,7 @@ export async function verifySessionToken(token: string): Promise<SessionClaims |
   if (!payload || typeof payload.sub !== "string") return null;
   // A purpose token (2FA challenge, invitation) must never pass as a session.
   if (payload.purpose !== undefined) return null;
-  if (payload.role !== "ADMIN" && payload.role !== "PATIENT") return null;
+  if (payload.role !== "ADMIN" && payload.role !== "STAFF" && payload.role !== "PATIENT") return null;
   return {
     sub: payload.sub,
     role: payload.role,
@@ -72,7 +79,8 @@ export async function verifySessionToken(token: string): Promise<SessionClaims |
 
 // --- Purpose tokens ------------------------------------------------------------
 
-export type TokenPurpose = "2fa" | "invite";
+/** "member": the long-lived wallet link that opens a member's portal without a password. */
+export type TokenPurpose = "2fa" | "invite" | "member";
 
 export type PurposeClaims = {
   purpose: TokenPurpose;

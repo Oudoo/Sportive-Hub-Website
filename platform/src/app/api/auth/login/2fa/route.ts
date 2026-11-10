@@ -1,4 +1,4 @@
-import { issueSessionToken, sessionCookie } from "@/lib/auth/session";
+import { homeFor, issueSessionToken, sessionCookie } from "@/lib/auth/session";
 import { ok, parseJson, route } from "@/lib/http";
 import { systemContext } from "@/lib/security/context";
 import { completeTwoFactorLogin } from "@/lib/services/auth";
@@ -18,7 +18,7 @@ export const POST = route(async (request) => {
   const response = ok({
     user,
     ...(input.issueToken ? { token } : {}),
-    redirectTo: user.role === "ADMIN" ? "/admin" : "/portal",
+    redirectTo: homeFor(user),
   });
   response.cookies.set(sessionCookie(token));
   return response;

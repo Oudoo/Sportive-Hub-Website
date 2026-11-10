@@ -1,4 +1,4 @@
-import { issueSessionToken, sessionCookie } from "@/lib/auth/session";
+import { homeFor, issueSessionToken, sessionCookie } from "@/lib/auth/session";
 import { HttpError, ok, parseJson, route } from "@/lib/http";
 import { systemContext } from "@/lib/security/context";
 import { LIMITS, enforceRateLimit } from "@/lib/security/ratelimit";
@@ -27,7 +27,7 @@ export const POST = route(async (request) => {
   const user = await acceptInvite(input, { ...systemContext, request });
 
   const token = await issueSessionToken(user);
-  const response = ok({ user, redirectTo: user.role === "ADMIN" ? "/admin" : "/portal" });
+  const response = ok({ user, redirectTo: homeFor(user) });
   response.cookies.set(sessionCookie(token));
   return response;
 });

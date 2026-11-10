@@ -6,7 +6,7 @@ import { api, ApiError } from "@/components/api";
 import { Button } from "@/components/ui";
 
 /** Fulfil or cancel one voucher. Cancelling refunds the points. */
-export function RedemptionActions({ id, status, rewardName }: { id: string; status: "PENDING" | "FULFILLED" | "CANCELLED"; rewardName: string }) {
+export function RedemptionActions({ id, status, rewardName }: { id: string; status: "PENDING" | "FULFILLED" | "CANCELLED" | "EXPIRED"; rewardName: string }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +26,7 @@ export function RedemptionActions({ id, status, rewardName }: { id: string; stat
     }
   }
 
-  if (status === "CANCELLED") return null;
+  if (status === "CANCELLED" || status === "EXPIRED") return null;
 
   return (
     <div className="grid gap-1">

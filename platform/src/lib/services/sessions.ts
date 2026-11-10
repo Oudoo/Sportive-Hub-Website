@@ -6,11 +6,15 @@ import { emitEvent } from "@/lib/integrations/webhooks";
 import { getSettings, qualifyReferral, recordPoints, sessionPointsFor, type PointsResult, type Tx } from "@/lib/loyalty";
 import { audit } from "@/lib/security/audit";
 import type { ActionContext } from "@/lib/security/context";
+import { takePackSessionInTx } from "@/lib/services/packs";
+import { pushToUser } from "@/lib/services/push";
+import { issueStampVoucher } from "@/lib/services/rewards";
 import type { SessionCreateInput, SessionUpdateInput, V1SessionUpsertInput, sessionsQuerySchema } from "@/lib/validation";
 import type { z } from "zod";
 
 const sessionInclude = {
-  patient: { select: { id: true, fullName: true, email: true, phone: true, externalSource: true, externalId: true } },
+  patient: { select: { id: true, fullName: true, email: true, phone: true, memberCode: true, externalSource: true, externalId: true } },
+  coursePack: { select: { id: true, name: true, totalSessions: true, usedSessions: true, status: true } },
 } satisfies Prisma.SessionInclude;
 
 export type SessionWithPatient = Prisma.SessionGetPayload<{ include: typeof sessionInclude }>;
@@ -24,7 +28,7 @@ export async function listSessions(query: SessionsQuery) {
     ...(query.patientId ? { patientId: query.patientId } : {}),
     ...(query.externalSource ? { externalSource: query.externalSource } : {}),
     ...(upcoming ? { status: "SCHEDULED", startsAt: { gte: new Date() } } : {}),
-    ...(unpaid ? { paidAt: null, isComplimentary: false, status: { in: ["SCHEDULED", "COMPLETED"] } } : {}),
+    ...(unpaid ? { paidAt: null, isComplimentary: false, coursePackId: null, status: { in: ["SCHEDULED", "COMPLETED"] } } : {}),
     ...(query.from || query.to ? { startsAt: { ...(query.from ? { gte: query.from } : {}), ...(query.to ? { lte: query.to } : {}) } } : {}),
   };
 
@@ -55,34 +59,66 @@ async function assertActivePatient(tx: Tx, patientId: string) {
   }
 }
 
+/** The pack must belong to the patient, be active and have sessions left. */
+async function assertPack(tx: Tx, packId: string, patientId: string) {
+  const pack = await tx.coursePack.findUnique({ where: { id: packId }, select: { userId: true, status: true, usedSessions: true, totalSessions: true } });
+  if (!pack || pack.userId !== patientId) throw new HttpError(422, "Unknown course pack", [{ path: "coursePackId", message: "Choose one of this patient's packs" }]);
+  if (pack.status !== "ACTIVE" || pack.usedSessions >= pack.totalSessions) throw new HttpError(422, "That course pack has no sessions left", [{ path: "coursePackId", message: "No sessions left" }]);
+}
+
 type Referral = { referrerId: string; points: number } | null;
-type CompletionResult = { points: PointsResult | null; pointsAwarded: number; referral: Referral };
+
+/** Everything that happened when a session was attended, for the scanner's confirmation screen. */
+export type CompletionOutcome = {
+  pointsAwarded: number;
+  points: PointsResult | null;
+  stamp: { count: number; size: number; completed: boolean; voucherCode: string | null; voucherId: string | null };
+  pack: { id: string; remaining: number; completed: boolean } | null;
+  referral: Referral;
+};
 
 /**
  * What happens when a session is attended: points for the patient (base x tier bonus
- * x promotion), and the referrer's bonus if the programme pays on the first attended
- * session. Runs inside the caller's transaction.
+ * x promotion), a stamp on their card (a full card issues the card's voucher), one
+ * session used from the chosen course pack, the last-visit date, and the referrer's
+ * bonus if the programme pays on the first attended session. Runs inside the caller's transaction.
  */
-async function completeSessionInTx(tx: Tx, input: { sessionId: string; patientId: string; settings: LoyaltySettings }): Promise<CompletionResult> {
-  const patient = await tx.user.findUniqueOrThrow({ where: { id: input.patientId }, select: { lifetimePoints: true } });
-  const { points: amount, tier, promo } = sessionPointsFor(patient.lifetimePoints, input.settings);
+async function completeSessionInTx(tx: Tx, input: { sessionId: string; patientId: string; coursePackId: string | null; startsAt: Date; settings: LoyaltySettings }): Promise<CompletionOutcome> {
+  const { settings } = input;
+  const patient = await tx.user.findUniqueOrThrow({ where: { id: input.patientId }, select: { lifetimePoints: true, stampCount: true } });
+  const { points: amount, tier, promo } = sessionPointsFor(patient.lifetimePoints, settings);
 
   let points: PointsResult | null = null;
   if (amount > 0) {
     const notes = ["Attended a session"];
     if (tier.bonusPercent > 0) notes.push(`${tier.name} +${tier.bonusPercent}%`);
-    if (promo) notes.push(input.settings.promoLabel ?? `x${input.settings.promoMultiplierPercent / 100}`);
-    points = await recordPoints(tx, {
-      userId: input.patientId,
-      points: amount,
-      reason: "SESSION_ATTENDED",
-      referenceId: input.sessionId,
-      note: notes.join(" · "),
-    });
+    if (promo) notes.push(settings.promoLabel ?? `x${settings.promoMultiplierPercent / 100}`);
+    points = await recordPoints(tx, { userId: input.patientId, points: amount, reason: "SESSION_ATTENDED", referenceId: input.sessionId, note: notes.join(" · ") });
   }
 
-  const referral = input.settings.referralTrigger === "FIRST_SESSION" ? await qualifyReferral(tx, { patientId: input.patientId, settings: input.settings }) : null;
-  return { points, pointsAwarded: amount, referral };
+  // Stamp card: one stamp per visit; a full card issues the configured voucher and starts over.
+  let stampCount = patient.stampCount + 1;
+  let voucher: { id: string; code: string } | null = null;
+  const completedCard = stampCount >= settings.stampCardSize;
+  if (completedCard) {
+    voucher = await issueStampVoucher(tx, { userId: input.patientId, settings });
+    stampCount = 0;
+  }
+  await tx.user.update({
+    where: { id: input.patientId },
+    data: { stampCount, ...(completedCard ? { stampCardsCompleted: { increment: 1 } } : {}), lastVisitAt: input.startsAt > new Date() ? new Date() : input.startsAt },
+  });
+
+  const pack = input.coursePackId ? await takePackSessionInTx(tx, input.coursePackId) : null;
+  const referral = settings.referralTrigger === "FIRST_SESSION" ? await qualifyReferral(tx, { patientId: input.patientId, settings }) : null;
+
+  return {
+    pointsAwarded: amount,
+    points,
+    stamp: { count: stampCount, size: settings.stampCardSize, completed: completedCard, voucherCode: voucher?.code ?? null, voucherId: voucher?.id ?? null },
+    pack,
+    referral,
+  };
 }
 
 /**
@@ -96,12 +132,28 @@ async function paySessionInTx(tx: Tx, input: { patientId: string; settings: Loya
 async function emitReferral(session: SessionWithPatient, referral: Referral, via: "FIRST_SESSION" | "FIRST_PAYMENT") {
   if (!referral) return;
   await emitEvent("referral.qualified", { referrerId: referral.referrerId, referredPatientId: session.patientId, points: referral.points, sessionId: session.id, via });
+  await pushToUser(referral.referrerId, { title: `+${referral.points} points`, body: "A friend you invited just had their first session at Sportive Hub. Thank you!", url: "/portal/wallet", tag: "referral" });
 }
 
-async function emitCompletion(session: SessionWithPatient, completion: CompletionResult) {
-  await emitEvent("session.completed", { session: sessionPayload(session), pointsAwarded: completion.pointsAwarded });
-  if (completion.points) await emitEvent("loyalty.points_changed", pointsPayload(session.patientId, completion.points));
-  await emitReferral(session, completion.referral, "FIRST_SESSION");
+async function afterCompletion(session: SessionWithPatient, outcome: CompletionOutcome, settings: LoyaltySettings) {
+  await emitEvent("session.completed", { session: sessionPayload(session), pointsAwarded: outcome.pointsAwarded, stamps: outcome.stamp.count, stampCardCompleted: outcome.stamp.completed });
+  if (outcome.points) await emitEvent("loyalty.points_changed", pointsPayload(session.patientId, outcome.points));
+  await emitReferral(session, outcome.referral, "FIRST_SESSION");
+  if (outcome.stamp.completed) {
+    await audit({ action: "stampcard.completed", actor: { type: "SYSTEM" }, target: { type: "user", id: session.patientId }, meta: { voucherCode: outcome.stamp.voucherCode } });
+    await emitEvent("stampcard.completed", { patientId: session.patientId, voucherCode: outcome.stamp.voucherCode, size: settings.stampCardSize });
+    if (outcome.stamp.voucherCode) {
+      await pushToUser(session.patientId, { title: "Stamp card complete", body: `Your reward is ready: voucher ${outcome.stamp.voucherCode}. Show it at the front desk.`, url: "/portal/wallet", tag: "stampcard" });
+    }
+  } else if (outcome.stamp.count === settings.stampCardSize - 1) {
+    await pushToUser(session.patientId, { title: "One visit away", body: "One more session fills your stamp card and unlocks a reward.", url: "/portal/wallet", tag: "stampcard" });
+  }
+  if (outcome.pack?.completed) {
+    await audit({ action: "pack.completed", actor: { type: "SYSTEM" }, target: { type: "pack", id: outcome.pack.id }, meta: { patientId: session.patientId } });
+    await emitEvent("pack.completed", { patientId: session.patientId, packId: outcome.pack.id });
+  } else if (outcome.pack && outcome.pack.remaining <= 1) {
+    await pushToUser(session.patientId, { title: outcome.pack.remaining === 1 ? "One session left in your pack" : "Pack running low", body: "Book your next slot on WhatsApp so your progress keeps going.", url: "/portal/wallet", tag: "pack" });
+  }
 }
 
 async function emitPayment(session: SessionWithPatient, referral: Referral) {
@@ -130,28 +182,38 @@ function paymentData(input: PaymentInput, current: { paidAt: Date | null; isComp
   };
 }
 
-export async function createSession(input: SessionCreateInput & ExternalRef, ctx: ActionContext): Promise<SessionWithPatient> {
-  const settings = await getSettings();
-  const { status, paid, paidAt, amountPaid, paymentMethod, ...fields } = input;
-  const completes = status === "COMPLETED";
-  const payment = paymentData({ paid, paidAt, amountPaid, paymentMethod }, { paidAt: null, isComplimentary: fields.isComplimentary });
+export type CreateSessionResult = { session: SessionWithPatient; outcome: CompletionOutcome | null; paymentRecorded: boolean; paymentReferral: Referral };
 
-  const { session, completion, referral } = await prisma.$transaction(async (tx) => {
+/** Creates a session and reports everything it triggered (points, stamps, pack, referral). */
+export async function createSessionWithOutcome(input: SessionCreateInput & ExternalRef, ctx: ActionContext): Promise<CreateSessionResult> {
+  const settings = await getSettings();
+  const { status, paid, paidAt, amountPaid, paymentMethod, coursePackId, ...fields } = input;
+  const completes = status === "COMPLETED";
+  // A session taken from a prepaid pack is already paid for; no separate payment record.
+  const payment = coursePackId ? { newlyPaid: false, data: {} } : paymentData({ paid, paidAt, amountPaid, paymentMethod }, { paidAt: null, isComplimentary: fields.isComplimentary });
+
+  const { session, outcome, referral } = await prisma.$transaction(async (tx) => {
     await assertActivePatient(tx, input.patientId);
+    if (coursePackId) await assertPack(tx, coursePackId, input.patientId);
     const created = await tx.session.create({
-      data: { ...fields, status, ...payment.data, ...(completes ? { pointsAwardedAt: new Date() } : {}) },
+      data: { ...fields, status, coursePackId: coursePackId ?? null, ...payment.data, ...(completes ? { pointsAwardedAt: new Date() } : {}) },
       include: sessionInclude,
     });
-    const completion = completes ? await completeSessionInTx(tx, { sessionId: created.id, patientId: created.patientId, settings }) : null;
+    const outcome = completes ? await completeSessionInTx(tx, { sessionId: created.id, patientId: created.patientId, coursePackId: coursePackId ?? null, startsAt: created.startsAt, settings }) : null;
     const referral = payment.newlyPaid ? await paySessionInTx(tx, { patientId: created.patientId, settings }) : null;
-    return { session: created, completion, referral };
+    const session = outcome?.pack ? await tx.session.findUniqueOrThrow({ where: { id: created.id }, include: sessionInclude }) : created;
+    return { session, outcome, referral };
   });
 
-  await audit({ action: "session.created", actor: ctx.actor, target: { type: "session", id: session.id }, request: ctx.request, meta: { patientId: session.patientId, status, paid: payment.newlyPaid } });
+  await audit({ action: "session.created", actor: ctx.actor, target: { type: "session", id: session.id }, request: ctx.request, meta: { patientId: session.patientId, status, paid: payment.newlyPaid, pack: coursePackId ?? undefined } });
   await emitEvent("session.created", { session: sessionPayload(session) });
-  if (completion) await emitCompletion(session, completion);
+  if (outcome) await afterCompletion(session, outcome, settings);
   if (payment.newlyPaid) await emitPayment(session, referral);
-  return session;
+  return { session, outcome, paymentRecorded: payment.newlyPaid, paymentReferral: referral };
+}
+
+export async function createSession(input: SessionCreateInput & ExternalRef, ctx: ActionContext): Promise<SessionWithPatient> {
+  return (await createSessionWithOutcome(input, ctx)).session;
 }
 
 export async function getSession(id: string): Promise<SessionWithPatient> {
@@ -160,6 +222,8 @@ export async function getSession(id: string): Promise<SessionWithPatient> {
   return session;
 }
 
+export type UpdateSessionResult = { session: SessionWithPatient; outcome: CompletionOutcome | null; paymentRecorded: boolean; paymentReferral: Referral };
+
 /**
  * Edits a session. Marking it COMPLETED awards attendance points to the patient,
  * once: `pointsAwardedAt` remembers that it happened, so flipping the status back
@@ -167,13 +231,13 @@ export async function getSession(id: string): Promise<SessionWithPatient> {
  * Marking it paid (`paid: true`) records the payment once and, by default, qualifies
  * the patient's referral; removing a payment never takes a referral bonus back.
  */
-export async function updateSession(id: string, input: SessionUpdateInput & ExternalRef, ctx: ActionContext): Promise<SessionWithPatient> {
+export async function updateSessionWithOutcome(id: string, input: SessionUpdateInput & ExternalRef, ctx: ActionContext): Promise<UpdateSessionResult> {
   const settings = await getSettings();
 
-  const { session, completion, payment, referral } = await prisma.$transaction(async (tx) => {
+  const { session, outcome, payment, referral } = await prisma.$transaction(async (tx) => {
     const existing = await tx.session.findUnique({
       where: { id },
-      select: { id: true, patientId: true, status: true, pointsAwardedAt: true, paidAt: true, isComplimentary: true },
+      select: { id: true, patientId: true, status: true, pointsAwardedAt: true, paidAt: true, isComplimentary: true, coursePackId: true, startsAt: true },
     });
     if (!existing) throw new HttpError(404, "Session not found");
 
@@ -181,37 +245,60 @@ export async function updateSession(id: string, input: SessionUpdateInput & Exte
       await assertActivePatient(tx, input.patientId);
     }
 
-    const { status, paid, paidAt, amountPaid, paymentMethod, ...fields } = input;
+    const { status, paid, paidAt, amountPaid, paymentMethod, coursePackId, ...fields } = input;
     const shouldAward = status === "COMPLETED" && existing.status !== "COMPLETED" && !existing.pointsAwardedAt;
     const patientId = input.patientId ?? existing.patientId;
-    const payment = paymentData({ paid, paidAt, amountPaid, paymentMethod }, { paidAt: existing.paidAt, isComplimentary: fields.isComplimentary ?? existing.isComplimentary });
+    const packId = coursePackId === undefined ? existing.coursePackId : coursePackId;
+    if (coursePackId) await assertPack(tx, coursePackId, patientId);
+    const payment = packId ? { newlyPaid: false, data: {} } : paymentData({ paid, paidAt, amountPaid, paymentMethod }, { paidAt: existing.paidAt, isComplimentary: fields.isComplimentary ?? existing.isComplimentary });
 
     const updated = await tx.session.update({
       where: { id },
       data: {
         ...fields,
+        ...(coursePackId !== undefined ? { coursePackId } : {}),
         ...(status ? { status } : {}),
         ...(shouldAward ? { pointsAwardedAt: new Date() } : {}),
         ...payment.data,
       },
       include: sessionInclude,
     });
-    const completion = shouldAward ? await completeSessionInTx(tx, { sessionId: id, patientId, settings }) : null;
+    const outcome = shouldAward ? await completeSessionInTx(tx, { sessionId: id, patientId, coursePackId: packId, startsAt: updated.startsAt, settings }) : null;
     const referral = payment.newlyPaid ? await paySessionInTx(tx, { patientId, settings }) : null;
-    return { session: updated, completion, payment, referral };
+    const session = outcome?.pack ? await tx.session.findUniqueOrThrow({ where: { id }, include: sessionInclude }) : updated;
+    return { session, outcome, payment, referral };
   });
 
   await audit({ action: "session.updated", actor: ctx.actor, target: { type: "session", id }, request: ctx.request, meta: { fields: Object.keys(input), ...(payment.newlyPaid ? { paid: true } : {}) } });
   await emitEvent("session.updated", { session: sessionPayload(session), changed: Object.keys(input) });
-  if (completion) await emitCompletion(session, completion);
+  if (outcome) await afterCompletion(session, outcome, settings);
   if (payment.newlyPaid) await emitPayment(session, referral);
-  return session;
+  return { session, outcome, paymentRecorded: payment.newlyPaid, paymentReferral: referral };
+}
+
+export async function updateSession(id: string, input: SessionUpdateInput & ExternalRef, ctx: ActionContext): Promise<SessionWithPatient> {
+  return (await updateSessionWithOutcome(id, input, ctx)).session;
 }
 
 export async function deleteSession(id: string, ctx: ActionContext): Promise<void> {
   const result = await prisma.session.deleteMany({ where: { id } });
   if (result.count === 0) throw new HttpError(404, "Session not found");
   await audit({ action: "session.deleted", actor: ctx.actor, target: { type: "session", id }, request: ctx.request });
+}
+
+/** Default length of a session of each kind, for the scanner's one-tap log. */
+export function defaultDurationFor(type: SessionType): number {
+  switch (type) {
+    case "EMS":
+      return 20;
+    case "IV_THERAPY":
+      return 45;
+    case "LYMPHATIC_DRAINAGE":
+    case "CUPPING":
+      return 60;
+    default:
+      return 60;
+  }
 }
 
 // --- Integrations ---------------------------------------------------------------------
@@ -276,6 +363,7 @@ export async function upsertExternalSession(input: V1SessionUpsertInput, ctx: Ac
     paidAt: input.paidAt,
     amountPaid: input.amountPaid,
     paymentMethod: input.paymentMethod,
+    checkInMethod: "API" as const,
   };
 
   if (existing) {

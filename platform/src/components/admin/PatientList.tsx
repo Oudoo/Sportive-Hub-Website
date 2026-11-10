@@ -8,7 +8,7 @@ export function PatientList({ items, total, page, perPage, q }: { items: Patient
   return (
     <div className="grid gap-4">
       <form method="get" action="/admin/patients" className="flex flex-wrap gap-2">
-        <Input name="q" defaultValue={q ?? ""} placeholder="Search name, email, phone, code or external id" className="max-w-sm" aria-label="Search patients" />
+        <Input name="q" defaultValue={q ?? ""} placeholder="Search name, phone, email, member code or external id" className="max-w-sm" aria-label="Search patients" />
         <Button type="submit" variant="secondary">
           Search
         </Button>
@@ -49,7 +49,7 @@ export function PatientList({ items, total, page, perPage, q }: { items: Patient
                   </div>
                 </Td>
                 <Td>
-                  <div>{p.email}</div>
+                  <div>{p.email ?? <span className="font-mono text-xs">{p.memberCode}</span>}</div>
                   {p.phone && <div className="text-xs text-olive">{p.phone}</div>}
                 </Td>
                 <Td className="text-right tabular-nums">{p.loyaltyPoints}</Td>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireAdminPage } from "@/lib/auth/page";
 import Link from "next/link";
 import { Badge, Button, Card, Empty, Input, PageTitle, Pagination, Select, Stat, Table, Td, Th } from "@/components/ui";
 import { formatDateTime } from "@/lib/format";
@@ -23,6 +24,7 @@ const GROUPS = [
 ];
 
 export default async function ActivityPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  await requireAdminPage("/admin/activity");
   const raw = await searchParams;
   const parsed = auditQuerySchema.safeParse(raw);
   const query = parsed.success ? parsed.data : auditQuerySchema.parse({});

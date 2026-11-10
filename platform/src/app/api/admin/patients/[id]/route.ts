@@ -1,4 +1,4 @@
-import { requireAdmin } from "@/lib/auth/session";
+import { requireAdmin, requireStaff } from "@/lib/auth/session";
 import { ok, parseJson, route, type IdContext } from "@/lib/http";
 import { userContext } from "@/lib/security/context";
 import { getPatient, updatePatient } from "@/lib/services/patients";
@@ -6,7 +6,7 @@ import { patientUpdateSchema } from "@/lib/validation";
 
 /** GET /api/admin/patients/:id — profile, referrer, referrals, sessions, vouchers, points history, security state. */
 export const GET = route<IdContext>(async (_request, { params }) => {
-  await requireAdmin();
+  await requireStaff();
   const { id } = await params;
   return ok(await getPatient(id));
 });

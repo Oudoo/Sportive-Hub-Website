@@ -3,9 +3,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PatientActions } from "@/components/admin/PatientActions";
 import { PatientSecurity } from "@/components/admin/PatientSecurity";
+import { StampCard } from "@/components/portal/wallet/StampCard";
 import { Badge, Card, Dl, Empty, PageTitle, ProgressBar, Table, Td, Th } from "@/components/ui";
+import { requireStaffPage } from "@/lib/auth/page";
 import {
+  COURSE_PACK_STATUS_LABELS,
   LOYALTY_REASON_LABELS,
+  PARTNER_CLAIM_STATUS_LABELS,
   REDEMPTION_STATUS_LABELS,
   REDEMPTION_STATUS_TONE,
   REFERRAL_PENDING_HINT,
@@ -29,13 +33,15 @@ export const metadata: Metadata = { title: "Patient" };
 const STATUS_TONE = { SCHEDULED: "info", COMPLETED: "good", CANCELLED: "neutral", NO_SHOW: "bad" } as const;
 
 export default async function PatientPage({ params }: { params: Promise<{ id: string }> }) {
+  await requireStaffPage("/admin/patients");
   const { id } = await params;
   const patient = await getPatient(id).catch((error: unknown) => {
     if (error instanceof HttpError && error.status === 404) notFound();
     throw error;
   });
-  const [settings, catalogue] = await Promise.all([getSettings(), listRewards({ includeInactive: false })]);
-  const rewards = catalogue.map((reward) => ({ id: reward.id, name: reward.name, cost: reward.cost, blocker: redemptionBlocker(reward, patient, settings) }));
+  const [settings, catalogue] = await Promise.all([getSettings(), listRewards({ includeInactive: true })]);
+  const rewards = catalogue.filter((reward) => reward.isActive).map((reward) => ({ id: reward.id, name: reward.name, cost: reward.cost, blocker: redemptionBlocker(reward, patient, settings) }));
+  const stampReward = settings.stampRewardId ? (catalogue.find((reward) => reward.id === settings.stampRewardId) ?? null) : null;
 
   return (
     <>
@@ -47,10 +53,18 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
       <PageTitle
         lede={
           <>
-            {patient.email}
+            <span className="font-mono">{patient.memberCode}</span>
+            {patient.email ? ` · ${patient.email}` : ""}
             {patient.phone ? ` · ${patient.phone}` : ""} · joined {formatDate(patient.createdAt)}
+            {patient.joinedVia ? ` via ${patient.joinedVia}` : ""}
+            {patient.lastVisitAt ? ` · last visit ${formatDate(patient.lastVisitAt)}` : ""}
             {patient.externalSource && ` · ${patient.externalSource} id ${patient.externalId}`}
           </>
+        }
+        action={
+          <Link href={`/admin/scanner?code=${encodeURIComponent(patient.memberCode)}`} className="inline-flex min-h-10 items-center rounded-sm border border-charcoal bg-charcoal px-4 text-xs font-medium uppercase tracking-[0.12em] text-milk hover:border-olive hover:bg-olive">
+            Open in scanner
+          </Link>
         }
       >
         {patient.fullName}
@@ -77,6 +91,9 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
             <div className="mt-3">
               <ProgressBar value={patient.tier.progress} label="Progress to the next tier" />
             </div>
+            <div className="mt-5">
+              <StampCard count={patient.stampCount} size={settings.stampCardSize} rewardName={stampReward?.name ?? null} cardsCompleted={patient.stampCardsCompleted} light />
+            </div>
             {!patient.isActive && (
               <div className="mt-3">
                 <Badge tone="bad">Account deactivated</Badge>
@@ -85,6 +102,54 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
             <div className="mt-5">
               <PatientActions patientId={patient.id} isActive={patient.isActive} rewards={rewards} />
             </div>
+          </Card>
+
+          <Card
+            title="Course packs & perks"
+            action={
+              <Link href={`/admin/packs?patientId=${patient.id}`} className="text-sm underline underline-offset-4">
+                Sell a pack
+              </Link>
+            }
+          >
+            {patient.coursePacks.length === 0 ? (
+              <p className="text-sm text-olive">No packs yet.</p>
+            ) : (
+              <ul className="grid gap-2 text-sm">
+                {patient.coursePacks.map((p) => (
+                  <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-charcoal/10 pb-2 last:border-0">
+                    <span>
+                      {p.name}
+                      <span className="block text-xs text-olive">
+                        {SESSION_TYPE_LABELS[p.type]} · bought {formatDate(p.purchasedAt)}
+                        {p.expiresAt ? ` · until ${formatDate(p.expiresAt)}` : ""}
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <span className="tabular-nums">
+                        {p.usedSessions}/{p.totalSessions}
+                      </span>
+                      <Badge tone={p.status === "ACTIVE" ? "good" : p.status === "COMPLETED" ? "neutral" : "warn"}>{COURSE_PACK_STATUS_LABELS[p.status]}</Badge>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {patient.partnerClaims.length > 0 && (
+              <>
+                <h3 className="mt-4 text-xs uppercase tracking-[0.12em] text-olive">Partner coupons</h3>
+                <ul className="mt-1 grid gap-1 text-sm">
+                  {patient.partnerClaims.map((c) => (
+                    <li key={c.id} className="flex flex-wrap items-center justify-between gap-2">
+                      <span>
+                        {c.offer.partnerName}: {c.offer.title} · <span className="font-mono text-xs">{c.code}</span>
+                      </span>
+                      <Badge tone={c.status === "ACTIVE" ? "good" : "neutral"}>{PARTNER_CLAIM_STATUS_LABELS[c.status]}</Badge>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
           </Card>
 
           <Card title="Sign-in & security">
