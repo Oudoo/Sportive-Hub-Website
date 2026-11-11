@@ -345,11 +345,11 @@ export function WalletView({ data, prefill }: { data: WalletJson; prefill: Check
 
         <Section title="Your home exercises" hint="A member perk: the physiotherapists' starter exercises for every area, with the 3D pain map.">
           <div className="flex flex-wrap items-center gap-2">
-            <a href={`https://sportive-hub.com/where-it-hurts${member.focusArea ? `#${member.focusArea}` : ""}`} target="_blank" rel="noopener" className={primary}>
+            <a href={`https://sportive-hub.com/where-it-hurts?m=${encodeURIComponent(member.memberCode)}${member.focusArea ? `#${member.focusArea}` : ""}`} target="_blank" rel="noopener" className={primary}>
               {member.focusArea && member.focusArea in FOCUS_AREA_LABELS ? `${FOCUS_AREA_LABELS[member.focusArea as FocusArea]} exercises` : "Open the pain map"}
             </a>
             {member.focusArea && (
-              <a href="https://sportive-hub.com/where-it-hurts" target="_blank" rel="noopener" className={ghost}>
+              <a href={`https://sportive-hub.com/where-it-hurts?m=${encodeURIComponent(member.memberCode)}`} target="_blank" rel="noopener" className={ghost}>
                 Other areas
               </a>
             )}
