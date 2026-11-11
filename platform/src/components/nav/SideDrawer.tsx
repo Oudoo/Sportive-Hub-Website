@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { NavIcon } from "@/components/nav/NavIcon";
 
 /**
@@ -24,7 +25,8 @@ export function SideDrawer({ open, onClose, title, children }: { open: boolean; 
 
   if (!open) return null;
 
-  return (
+  // Rendered at the body, so a sticky or blurred header never becomes its containing block.
+  return createPortal(
     <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="Menu">
       <button type="button" aria-label="Close menu" onClick={onClose} className="drawer-fade absolute inset-0 bg-charcoal/60" />
       <aside
@@ -41,6 +43,7 @@ export function SideDrawer({ open, onClose, title, children }: { open: boolean; 
         </div>
         {children}
       </aside>
-    </div>
+    </div>,
+    document.body,
   );
 }

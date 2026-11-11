@@ -32,7 +32,7 @@ export function PortalNav({ userName, pendingVouchers, teamLink }: { userName: s
   return (
     <header className="sticky top-0 z-40 border-b border-charcoal/15 bg-milk/95 backdrop-blur">
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-3 md:px-8 md:py-4">
-        <Link href="/portal/wallet" className="flex items-center gap-3">
+        <Link href="/portal/wallet" className="flex shrink-0 items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
           <img src="/logo.png" alt="Sportive Hub" className="h-8 w-auto" />
         </Link>
