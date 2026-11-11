@@ -154,6 +154,17 @@ footer{border-top:1px solid var(--rule);padding:1.4rem var(--gutter-r) 1.6rem va
 .track p{margin:0 0 12px;font-size:14px;color:var(--olive)}
 .track .btn{background:var(--olive);color:var(--milk);border-color:var(--olive)}
 .track .btn:hover{background:var(--charcoal);border-color:var(--charcoal)}
+
+/* Members gate: the pain map is part of the membership */
+.gate{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(40,40,40,.72);backdrop-filter:blur(6px)}
+.gate[hidden]{display:none}
+.gate .card{max-width:440px;width:100%;background:var(--milk);color:var(--charcoal);border-radius:6px;padding:28px 26px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.gate .eyebrow{display:block;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--olive);margin-bottom:10px}
+.gate h2{margin:0 0 10px;font-size:28px;line-height:1.1;font-weight:500;letter-spacing:-.01em}
+.gate h2 em{font-family:var(--serif);font-style:italic;font-weight:400}
+.gate p{margin:0 0 18px;color:var(--olive);font-size:15px}
+.gate .btn{margin:0 8px 8px 0}
+.gate .btn.fill{background:var(--olive);color:var(--milk);border-color:var(--olive)}
 </style>
 </head>
 <body>
@@ -165,6 +176,15 @@ footer{border-top:1px solid var(--rule);padding:1.4rem var(--gutter-r) 1.6rem va
   </div>
 </nav>
 
+<div class="gate" id="gate" hidden role="dialog" aria-modal="true" aria-labelledby="gate-h">
+  <div class="card">
+    <span class="eyebrow">Members only</span>
+    <h2 id="gate-h">Your home exercises live in your <em>wallet.</em></h2>
+    <p>The pain map and the physiotherapists' starter exercises are part of Sportive Hub membership. Join with your mobile number, or open your wallet if you were invited.</p>
+    <a class="btn fill" href="https://admin.sportive-hub.com/join?source=painmap">Join with your mobile number</a>
+    <a class="btn" href="https://admin.sportive-hub.com/portal/wallet">Open my wallet</a>
+  </div>
+</div>
 <main class="app">
   <section class="stage" id="stage" aria-label="3D body. Drag to turn it, tap where it hurts.">
     <div class="title"><h1>Where does it <em>hurt?</em></h1></div>
@@ -314,6 +334,14 @@ footer{border-top:1px solid var(--rule);padding:1.4rem var(--gutter-r) 1.6rem va
   function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
   function waLink(text){ return 'https://wa.me/201035555380?text=' + encodeURIComponent(text); }
   var JOIN_URL = 'https://admin.sportive-hub.com/join';
+  /* Members gate: the wallet links here with ?m=<member code>, which is remembered on this device. */
+  var IS_MEMBER = false;
+  try {
+    var mParam = new URL(location.href).searchParams.get('m');
+    if (mParam && /^SHM-[A-Z0-9]{8}$/.test(mParam)) { localStorage.setItem('sh_member', mParam); history.replaceState(null, '', location.pathname + location.hash); }
+    IS_MEMBER = !!localStorage.getItem('sh_member');
+  } catch (e) {}
+  if (!IS_MEMBER) { document.getElementById('gate').hidden = false; }
 
   ORDER.forEach(function(id){
     var li = document.createElement('li');
@@ -338,8 +366,8 @@ footer{border-top:1px solid var(--rule);padding:1.4rem var(--gutter-r) 1.6rem va
       '<div class="hub"><h3>Still sore after <em>two</em> weeks?</h3><p>A physiotherapist at Sportive Hub will find what\'s driving your ' + esc(where) + ' pain and build the plan from there.</p>' +
         '<ul>' + d.hub.map(function(h){ return '<li>' + esc(h) + '</li>'; }).join('') + '</ul>' +
         '<a class="btn milk" target="_blank" rel="noopener" href="' + waLink('Hi Sportive Hub, I have pain in my ' + where + ' and I\'d like to book an assessment.') + '">Book a ' + esc((d.short || d.name).toLowerCase()) + ' assessment <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></div>' +
-      '<div class="track"><h3>Track your recovery &amp; earn <em>+15</em> points</h3><p>Join Sportive Hub rewards with your mobile number: your ' + esc(d.name.toLowerCase()) + ' plan is saved to your wallet, you start with a movement bonus, and every visit adds points and a stamp.</p>' +
-        '<a class="btn" href="' + JOIN_URL + '?source=painmap&focus=' + encodeURIComponent(id) + '">Save my plan &amp; join rewards <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></div>';
+      (IS_MEMBER ? '' : '<div class="track"><h3>Track your recovery &amp; earn <em>+15</em> points</h3><p>Join Sportive Hub rewards with your mobile number: your ' + esc(d.name.toLowerCase()) + ' plan is saved to your wallet, you start with a movement bonus, and every visit adds points and a stamp.</p>' +
+        '<a class="btn" href="' + JOIN_URL + '?source=painmap&focus=' + encodeURIComponent(id) + '">Save my plan &amp; join rewards <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></div>');
     navBook.href = waLink('Hi Sportive Hub, I have pain in my ' + where + ' and I\'d like to book an assessment.');
     if (window.SHAnim) SHAnim.mountAll(areaEl);
   }
