@@ -7,7 +7,7 @@ import { api, ApiError } from "@/components/api";
 import { CopyButton } from "@/components/CopyButton";
 import { InstallAppButton } from "@/components/pwa/InstallAppButton";
 import { buttonClass, cx } from "@/components/ui";
-import { BRANCH_LABELS, SESSION_TYPE_LABELS, TIER_LABELS, clinicWhatsappLink, describeReward, formatShortDate } from "@/lib/format";
+import { BRANCH_LABELS, FOCUS_AREA_LABELS, SESSION_TYPE_LABELS, TIER_LABELS, clinicWhatsappLink, describeReward, formatShortDate, type FocusArea } from "@/lib/format";
 import type { Jsonified } from "@/lib/json";
 import type { WalletData } from "@/lib/services/wallet";
 import { CheckInDrawer, type CheckInPrefill } from "./CheckInDrawer";
@@ -342,6 +342,19 @@ export function WalletView({ data, prefill }: { data: WalletJson; prefill: Check
             </div>
           </Section>
         )}
+
+        <Section title="Your home exercises" hint="A member perk: the physiotherapists' starter exercises for every area, with the 3D pain map.">
+          <div className="flex flex-wrap items-center gap-2">
+            <a href={`https://sportive-hub.com/where-it-hurts${member.focusArea ? `#${member.focusArea}` : ""}`} target="_blank" rel="noopener" className={primary}>
+              {member.focusArea && member.focusArea in FOCUS_AREA_LABELS ? `${FOCUS_AREA_LABELS[member.focusArea as FocusArea]} exercises` : "Open the pain map"}
+            </a>
+            {member.focusArea && (
+              <a href="https://sportive-hub.com/where-it-hurts" target="_blank" rel="noopener" className={ghost}>
+                Other areas
+              </a>
+            )}
+          </div>
+        </Section>
 
         <Section title="Your wallet, everywhere">
           <div className="flex flex-wrap gap-2">
