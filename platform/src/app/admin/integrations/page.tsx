@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireAdminPage } from "@/lib/auth/page";
 import Link from "next/link";
 import { ApiKeysPanel } from "@/components/admin/integrations/ApiKeysPanel";
 import { WebhooksPanel } from "@/components/admin/integrations/WebhooksPanel";
@@ -11,6 +12,7 @@ import { listWebhooks } from "@/lib/services/integrations";
 export const metadata: Metadata = { title: "Integrations" };
 
 export default async function IntegrationsPage() {
+  await requireAdminPage("/admin/integrations");
   const [keys, hooks] = await Promise.all([listApiKeys(), listWebhooks()]);
   const base = new URL("/api/v1", getEnv().APP_URL).toString();
 

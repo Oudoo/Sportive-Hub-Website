@@ -123,14 +123,26 @@ Everything is configured under **Admin → Loyalty → Settings** (table `Loyalt
 | Staff add or deduct by hand (note required) | any | `MANUAL_ADJUSTMENT` |
 | Staff award a segment (anniversary, win-back) | any | `CAMPAIGN_BONUS` |
 | A reward is redeemed | −cost | `REWARD_REDEMPTION` |
-| A redemption is cancelled | +cost back | `REDEMPTION_REFUND` |
+| A redemption is cancelled or expires | +cost back | `REDEMPTION_REFUND` |
+| A member joins from the website's pain map | +15 | `PAIN_MAP_BONUS` |
+| A scanner action is undone | the points go back | `REVERSAL` |
 
 - **Tiers** by lifetime points: Bronze (0), Silver (300, +25% on session points), Gold (800, +50%). Spending never lowers a tier. Thresholds and bonuses are settings.
 - **Referral trigger**: by default the referrer is paid when the friend **pays for their first session** (`FIRST_PAYMENT`), so fake sign-ups and no-shows earn nothing. Staff record the payment from Sessions → **Mark as paid** (amount and method optional), or a booking system sends `paid: true`; the "To be paid" filter lists what is still open. The trigger can be switched to the first attended session or to registration. The welcome bonus is always paid at sign-up. Removing a payment record never takes a referral bonus back.
 - **Promotion**: a label, a multiplier (e.g. 200% = double points) and an end date; applies to session points while it runs.
 - **Rewards & vouchers**: patients redeem in the portal and get a voucher code to show at the desk (status PENDING); staff fulfil or cancel it under Loyalty → Redemptions. Staff and integrations redeeming on a patient's behalf fulfil immediately. Cancelling refunds the points and restores stock. Rewards can be tier-locked and stock-limited.
 - **Campaigns**: award N points to a segment (everyone, Silver+, Gold, active in 30/90 days, inactive 90 days) in one transaction.
-- **Referral links**: `/r/SPORT-XXXXXX` counts the open (rate-limited per IP), stores the code in a cookie for 30 days and opens `/register` with it filled in.
+- **Referral links**: `/r/SPORT-XXXXXX` counts the open (rate-limited per IP), stores the code in a cookie for 30 days and opens `/join` with it filled in.
+- **Members without a password**: `/join` (name + mobile number) creates the account, signs the phone in for 180 days and returns a **wallet link** `/m/<token>` (valid a year, cancelled by "sign out everywhere"). The front desk creates members the same way (Patients → Add member) and sends the link on WhatsApp. A member can add an email and password later from their account page.
+- **Member code & QR**: every account has an `SHM-XXXXXXXX` code. The wallet QR encodes `/admin/scanner?code=SHM-…`, so a dedicated scanner and a phone camera both open the member in the scanner.
+- **Stamp card**: every attended session adds a stamp (`stampCardSize`, default 8 = a 2×4 grid). A full card issues the configured reward as a free voucher (`stampRewardId`, source `STAMP_CARD`), resets the card and counts `stampCardsCompleted`.
+- **Vouchers expire** after `voucherValidityDays` (default 30): status `EXPIRED`, points refunded, stock restored. Expiry runs lazily whenever vouchers are listed or scanned.
+- **Course packs**: `PackageTemplate` is the price list (seeded from the website), `CoursePack` is one member's purchase. A session logged with `coursePackId` uses one; at zero the pack completes and the member is told. Pack sessions are never "unpaid".
+- **Check-ins**: a room's NFC tag or QR points at `/portal/wallet?checkin=BRANCH&room=3&via=nfc`; one tap creates a `CheckIn` (PENDING for 3 hours) that the scanner feed shows and turns into a logged session.
+- **Scanner actions & undo**: logging a session, redeeming a voucher, confirming a payment and using a partner coupon are audit rows (`scanner.*`, `partner.used`) with everything needed to reverse them; `POST /api/admin/scanner/undo/:auditId` undoes within 24 hours (session deleted, points reversed with a `REVERSAL` row, stamp, pack use, referral bonus and payment put back).
+- **Partner perks**: `PartnerOffer` (café, padel club…) → a member claims a `PartnerClaim` with a `PT-XXXXXXXX` code; the partner checks and uses it at `/verify/<code>` without an account.
+- **Regulars & churn**: `atRiskDays` (14) and `churnDays` (30) without a visit classify members for the WhatsApp list.
+- **Roles**: `ADMIN` sees everything; `STAFF` sees the scanner, sessions, patients, packs and the WhatsApp list. Every action is attributed to the signed-in person.
 
 Every change goes through `recordPoints()` inside a database transaction: the balance is updated with an atomic increment and the audit row is written in the same transaction, so the two can never disagree, and a deduction below zero rolls back with a 409.
 
@@ -148,26 +160,34 @@ Public:
 | POST | `/api/auth/logout` | | Clears the cookie |
 | GET / POST | `/api/auth/invite` | `token` / `token, password` | Who an invitation is for / set the password and sign in |
 | GET | `/api/updates` | `page, perPage` | Published updates only. Usable from the public website |
-| GET | `/r/:code` | | Referral short link |
+| GET | `/r/:code` | | Referral short link, lands on `/join` |
+| POST | `/api/loyalty/join` | `fullName, phone, email?, referralCode?, focusArea?, preferredBranch?, source?` | Passwordless membership; sets a long cookie, returns the wallet link |
+| GET | `/m/:token` | | Wallet link: signs the member in and opens `/portal/wallet` |
+| GET / POST | `/api/verify/:code` | | A partner checks / uses a member's coupon (also the `/verify/:code` page) |
 
-Signed in (any role): `GET /api/me`, `POST /api/me/password`, `POST /api/me/sessions/revoke`, `POST /api/me/2fa/{setup,enable,disable,recovery-codes}`, `GET /api/me/rewards`, `POST /api/me/redemptions`, `DELETE /api/me/redemptions/:id`, `GET /api/me/referrals`, `GET /api/me/activity`.
+Signed in (any role): `GET /api/me`, `GET /api/me/wallet`, `POST /api/me/wallet/google`, `POST /api/me/checkin`, `POST /api/me/partners/:id/claim`, `GET/POST/DELETE /api/me/push`, `PATCH /api/me/profile`, `POST /api/me/set-password`, `POST /api/me/password`, `POST /api/me/sessions/revoke`, `POST /api/me/2fa/{setup,enable,disable,recovery-codes}`, `GET /api/me/rewards`, `POST /api/me/redemptions`, `DELETE /api/me/redemptions/:id`, `GET /api/me/referrals`, `GET /api/me/activity`.
 
-Admin only: `/api/admin/overview`, `/api/admin/sessions[/:id]`, `/api/admin/updates[/:id]`, `/api/admin/patients` (GET, POST creates with an invitation link), `/api/admin/patients/:id` (+ `/points`, `/redeem`, `/invite`, `/security` with `action: unlock | reset-2fa | sign-out-everywhere`), `/api/admin/loyalty/{overview,settings,rewards[/:id],redemptions[/:id],campaign,ledger,referrals}`, `/api/admin/integrations/{keys[/:id],webhooks[/:id][/test|/deliveries],deliveries/:id/retry}`, `/api/admin/activity`.
+Staff and admins: `/api/admin/scanner/{inspect,action,search,feed}`, `/api/admin/scanner/undo/:auditId`, `/api/admin/scanner/checkins/:id/dismiss`, `/api/admin/members` (POST, phone-only member + wallet link), `/api/admin/patients` (GET, POST creates with an invitation link), `/api/admin/patients/:id` (GET; `/redeem`, `/invite`, `/member-link`), `/api/admin/sessions[/:id]` (GET, POST, PUT), `/api/admin/packs[/:id]`, `/api/admin/packs/templates` (GET), `/api/admin/crm`, `/api/admin/partners` (GET).
 
-Integration API (`/api/v1`, `Authorization: Bearer shk_live_...`): patients (list, upsert, lookup, get, update, invite, loyalty, adjust), sessions (list, upsert, get, update, delete), rewards, redemptions, updates, webhooks, settings, ping. The full reference with examples is at **`/docs`**; the OpenAPI 3.1 file at `/api/v1/openapi.json` imports into Postman.
+Admin only: `/api/admin/overview`, `/api/admin/updates[/:id]`, `/api/admin/patients/:id` (PATCH, `/points`, `/security` with `action: unlock | reset-2fa | sign-out-everywhere`), `DELETE /api/admin/sessions/:id`, `/api/admin/packs/templates` (POST, PATCH/DELETE `/:id`), `/api/admin/partners` (POST, PATCH/DELETE `/:id`), `/api/admin/team[/:id]`, `/api/admin/push`, `/api/admin/export/:kind` (CSV: patients, sessions, points, vouchers, packs), `/api/admin/loyalty/{overview,settings,rewards[/:id],redemptions[/:id],campaign,ledger,referrals}`, `/api/admin/integrations/{keys[/:id],webhooks[/:id][/test|/deliveries],deliveries/:id/retry}`, `/api/admin/activity`.
+
+Integration API (`/api/v1`, `Authorization: Bearer shk_live_...`): patients (list, upsert, lookup, get, update, invite, loyalty, adjust), sessions (list, upsert, get, update, delete; `coursePackId`, `checkInMethod` and `roomNumber` are returned), packs (list, sell), rewards, redemptions, updates, webhooks, settings, ping. The full reference with examples is at **`/docs`**; the OpenAPI 3.1 file at `/api/v1/openapi.json` imports into Postman.
 
 ## Integrations (ClinicMind and others)
 
 - **API keys**: Admin → Integrations. Each key has scopes (`patients:read`, `sessions:write`, …), an optional expiry, and can be revoked. Only a SHA-256 hash is stored; the key is shown once.
 - **Idempotent sync**: send `externalSource` (e.g. `clinicminds`) and `externalId` with patients and sessions; re-sending updates instead of duplicating. Records can be addressed as `ext:<source>:<id>`.
 - **Completing a visit** (`status: "COMPLETED"`) awards the points; **recording the payment** (`paid: true`, optionally `amountPaid` and `paymentMethod`) pays the referrer on a first paid session, exactly as the dashboard does.
-- **Webhooks**: HTTPS endpoints receive signed JSON (`X-SportiveHub-Signature: t=…,v1=<HMAC-SHA256>`), three attempts with backoff, delivery log and retry. Events: `patient.created/updated`, `session.created/updated/completed/paid`, `loyalty.points_changed`, `referral.qualified`, `redemption.created/fulfilled/cancelled`, `update.published`, `webhook.test`. Endpoints must be public HTTPS (no private addresses).
+- **Webhooks**: HTTPS endpoints receive signed JSON (`X-SportiveHub-Signature: t=…,v1=<HMAC-SHA256>`), three attempts with backoff, delivery log and retry. Events: `patient.created/updated`, `session.created/updated/completed/paid`, `loyalty.points_changed`, `referral.qualified`, `redemption.created/fulfilled/cancelled`, `stampcard.completed`, `pack.sold/completed`, `checkin.created`, `partner.claimed`, `update.published`, `webhook.test`. Endpoints must be public HTTPS (no private addresses).
 - **ClinicMind**: the dashboard's Integrations page has the step-by-step mapping (their Zapier triggers or Triggers & Actions API → our `/patients` and `/sessions` calls).
 
 ## Installable app (PWA)
 
 - `src/app/manifest.ts` serves `/manifest.webmanifest` (name, icons in `public/icons/`, standalone display, brand colours). The root layout adds the iOS tags and `apple-touch-icon.png`.
 - `public/sw.js` is the service worker, registered in production by `src/components/pwa/PwaRegister.tsx`. It caches only the app shell (the `/offline` page, icons, manifest) and the hashed files under `/_next/static`. Pages and API responses are never cached, so nothing private stays on a shared device.
+- **Push notifications** (web push, VAPID): run `npm run push:keys` once and put `WEB_PUSH_PUBLIC_KEY`, `WEB_PUSH_PRIVATE_KEY` and `WEB_PUSH_SUBJECT` (`mailto:` or the site URL) in the environment. Members turn notifications on from the wallet; the app sends "one visit away", "stamp card complete", "pack running low / finished" and the campaigns composed under Regulars & WhatsApp. Without the keys the button is hidden and nothing is sent.
+- **Google Wallet pass** (optional): a Google Pay & Wallet Console issuer plus a service account; set `GOOGLE_WALLET_ISSUER_ID`, `GOOGLE_WALLET_SA_EMAIL` and `GOOGLE_WALLET_SA_PRIVATE_KEY`. The wallet then shows "Add to Google Wallet"; the pass carries the member QR, points, tier and stamps and is updated after every points change. Apple Wallet needs an Apple Developer pass type certificate and is not implemented; the installable web wallet covers iPhones.
+- **Room tags**: print the QR (and write the NFC tag) with `/portal/wallet?checkin=SHEIKH_ZAYED&room=3&via=nfc` (or `via=qr`). The member's phone opens their wallet and offers a one-tap check-in; the scanner feed shows who is waiting.
 - An **Install app** button appears in the admin sidebar and the portal header when the browser offers installation. On iPhone, use Share → Add to Home Screen.
 - To force every client to drop old caches, bump `VERSION` in `public/sw.js`.
 
@@ -195,7 +215,7 @@ The app is live at **https://admin.sportive-hub.com**, a Node.js website on the 
 
 - The website `admin.sportive-hub.com` (its DNS records and SSL were created with it; HTTPS redirect is on).
 - A MySQL database attached to it. Hostinger wrote `DATABASE_URL` and `DB_*` into the app's environment variables.
-- Environment variables: `AUTH_SECRET`, `APP_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`, `NODE_ENV`, plus the database ones. Read or change them in hPanel → Websites → admin.sportive-hub.com → Node.js → Environment variables.
+- Environment variables: `AUTH_SECRET`, `APP_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`, `NODE_ENV`, plus the database ones; optional `WEB_PUSH_PUBLIC_KEY`, `WEB_PUSH_PRIVATE_KEY`, `WEB_PUSH_SUBJECT` (push notifications) and `GOOGLE_WALLET_ISSUER_ID`, `GOOGLE_WALLET_SA_EMAIL`, `GOOGLE_WALLET_SA_PRIVATE_KEY` (Google Wallet pass). Read or change them in hPanel → Websites → admin.sportive-hub.com → Node.js → Environment variables (the API returns them redacted, so they must be added there by hand).
 - Build settings: Node 22, app type Next.js, build script **`build:hostinger`**, output `.next`. That script runs `prisma generate`, `prisma migrate deploy` and `prisma db seed` before `next build`, so every deploy applies new migrations and keeps the admin account, settings and rewards; there is no separate release step.
 
 ### Deploying a new version

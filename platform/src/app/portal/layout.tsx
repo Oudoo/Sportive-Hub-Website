@@ -17,14 +17,14 @@ export default async function PortalLayout({ children }: { children: ReactNode }
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-charcoal/15">
         <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4 px-4 py-4 md:px-8">
-          <Link href="/portal" className="flex items-center gap-3">
+          <Link href="/portal/wallet" className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
             <img src="/logo.png" alt="Sportive Hub" className="h-8 w-auto" />
           </Link>
           <div className="flex items-center gap-3 text-sm">
-            {user.role === "ADMIN" && (
-              <Link href="/admin" className="text-olive underline underline-offset-4">
-                Admin
+            {user.role !== "PATIENT" && (
+              <Link href={user.role === "ADMIN" ? "/admin" : "/admin/scanner"} className="text-olive underline underline-offset-4">
+                {user.role === "ADMIN" ? "Admin" : "Scanner"}
               </Link>
             )}
             <Link href="/account" className="hidden text-olive underline underline-offset-4 sm:inline">

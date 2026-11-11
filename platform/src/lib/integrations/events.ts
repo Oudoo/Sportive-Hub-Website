@@ -15,6 +15,11 @@ export const WEBHOOK_EVENTS = {
   "redemption.fulfilled": "A voucher was honoured at the front desk",
   "redemption.cancelled": "A redemption was cancelled and the points refunded",
   "update.published": "An announcement, platform update or health tip went live",
+  "stampcard.completed": "A member filled their stamp card and received the card's reward voucher",
+  "pack.sold": "A course pack was sold to a member",
+  "pack.completed": "A member used the last session of a course pack",
+  "checkin.created": "A member announced their arrival (room tag or room QR)",
+  "partner.claimed": "A member claimed a partner coupon",
   "webhook.test": "A test message sent from the dashboard",
 } as const;
 

@@ -12,6 +12,14 @@ export const safeUserSelect = {
   phone: true,
   role: true,
   isActive: true,
+  joinedVia: true,
+  memberCode: true,
+  focusArea: true,
+  preferredBranch: true,
+  stampCount: true,
+  stampCardsCompleted: true,
+  lastVisitAt: true,
+  googleWalletObjectId: true,
   referralCode: true,
   referredById: true,
   referralQualifiedAt: true,
@@ -32,4 +40,9 @@ export type SafeUser = Prisma.UserGetPayload<{ select: typeof safeUserSelect }>;
 /** What another patient, or the public, may see about a user: a first name only. */
 export function firstNameOf(fullName: string): string {
   return fullName.trim().split(/\s+/)[0] ?? "";
+}
+
+/** Admins and staff: the clinic's team, as opposed to members. */
+export function isTeam(role: SafeUser["role"]): boolean {
+  return role === "ADMIN" || role === "STAFF";
 }

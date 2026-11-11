@@ -2,7 +2,7 @@ import { cookies, headers } from "next/headers";
 import { prisma } from "@/lib/db";
 import { getEnv } from "@/lib/env";
 import { HttpError } from "@/lib/http";
-import { safeUserSelect, type SafeUser } from "@/lib/serialize";
+import { isTeam, safeUserSelect, type SafeUser } from "@/lib/serialize";
 import { SESSION_COOKIE } from "./constants";
 import { SESSION_TTL_SECONDS, signSessionToken, verifySessionToken } from "./token";
 
@@ -14,7 +14,7 @@ import { SESSION_TTL_SECONDS, signSessionToken, verifySessionToken } from "./tok
 export { SESSION_COOKIE };
 
 /** Cookie attributes for a freshly issued session. */
-export function sessionCookie(token: string) {
+export function sessionCookie(token: string, maxAge: number = SESSION_TTL_SECONDS) {
   return {
     name: SESSION_COOKIE,
     value: token,
@@ -22,7 +22,7 @@ export function sessionCookie(token: string) {
     secure: getEnv().NODE_ENV === "production", // HTTPS only in production
     sameSite: "lax" as const, // not sent on cross-site POSTs, the first line of CSRF defence
     path: "/",
-    maxAge: SESSION_TTL_SECONDS,
+    maxAge,
   };
 }
 
@@ -32,8 +32,8 @@ export function clearedSessionCookie() {
 }
 
 /** Creates a signed token for a user who has just authenticated. */
-export function issueSessionToken(user: Pick<SafeUser, "id" | "role" | "fullName" | "sessionVersion">) {
-  return signSessionToken({ sub: user.id, role: user.role, name: user.fullName, sv: user.sessionVersion });
+export function issueSessionToken(user: Pick<SafeUser, "id" | "role" | "fullName" | "sessionVersion">, ttlSeconds?: number) {
+  return signSessionToken({ sub: user.id, role: user.role, name: user.fullName, sv: user.sessionVersion }, ttlSeconds);
 }
 
 /**
@@ -71,4 +71,16 @@ export async function requireAdmin(): Promise<SafeUser> {
   const user = await requireUser();
   if (user.role !== "ADMIN") throw new HttpError(403, "Admin access required");
   return user;
+}
+
+/** 403 unless signed in as an admin or a member of staff (reception, therapists, coaches). */
+export async function requireStaff(): Promise<SafeUser> {
+  const user = await requireUser();
+  if (!isTeam(user.role)) throw new HttpError(403, "Staff access required");
+  return user;
+}
+
+/** Where a signed-in user's home is. */
+export function homeFor(user: Pick<SafeUser, "role">): string {
+  return user.role === "PATIENT" ? "/portal/wallet" : user.role === "STAFF" ? "/admin/scanner" : "/admin";
 }

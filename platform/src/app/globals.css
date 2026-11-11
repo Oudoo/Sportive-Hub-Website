@@ -7,6 +7,12 @@
   --color-milk: #f0ece3;
   --color-pastel: #c9d6b8;
   --color-charcoal: #282828;
+  /* Wallet palette: the member pass, tickets and the scanner run dark emerald. */
+  --color-ink: #030705;
+  --color-emerald: #208a53;
+  --color-pine: #2c6654;
+  --color-leaf: #50a24a;
+  --color-mist: #f1f5f3;
   --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-serif: "Instrument Serif", Georgia, "Times New Roman", serif;
 }
@@ -15,4 +21,48 @@ body {
   background-color: var(--color-milk);
   color: var(--color-charcoal);
   -webkit-font-smoothing: antialiased;
+}
+
+/* A voucher or coupon: the tear line between the top and the stub, with the punched edges. */
+.ticket-tear {
+  position: relative;
+  height: 0;
+  border-top: 2px dashed rgba(3, 7, 5, 0.25);
+}
+.ticket-tear::before,
+.ticket-tear::after {
+  content: "";
+  position: absolute;
+  top: -12px;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--ticket-bg, var(--color-ink));
+}
+.ticket-tear::before {
+  left: -12px;
+}
+.ticket-tear::after {
+  right: -12px;
+}
+
+/* The scalloped bottom edge of a ticket stub. */
+.ticket-scallop {
+  -webkit-mask: radial-gradient(circle at 8px 100%, transparent 7px, #000 8px) -8px 0 / 16px 100% repeat-x;
+  mask: radial-gradient(circle at 8px 100%, transparent 7px, #000 8px) -8px 0 / 16px 100% repeat-x;
+}
+
+/* Hide the scrollbar on horizontal shelves without hiding the ability to scroll. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* The inline QR SVGs scale to their box. */
+.qr-box svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }

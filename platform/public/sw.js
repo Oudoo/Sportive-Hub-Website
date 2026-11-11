@@ -5,7 +5,7 @@
  * assets under /_next/static. Pages and API responses are never cached, so nothing
  * private is kept on a shared device, and signing out really signs out.
  */
-const VERSION = "v1"; // bump to make every client drop its old caches
+const VERSION = "v2"; // bump to make every client drop its old caches
 const SHELL_CACHE = `sh-shell-${VERSION}`;
 const STATIC_CACHE = `sh-static-${VERSION}`;
 const OFFLINE_URL = "/offline";
@@ -63,4 +63,37 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Everything else (API calls, photos) is network only and never cached.
+});
+
+// --- Push notifications (vouchers, stamp cards, packs running low, campaigns) ---
+
+self.addEventListener("push", (event) => {
+  let data = { title: "Sportive Hub", body: "", url: "/portal/wallet", tag: "sportive-hub" };
+  try {
+    data = { ...data, ...event.data.json() };
+  } catch {
+    /* a push without a JSON body */
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      tag: data.tag,
+      data: { url: data.url },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = new URL((event.notification.data && event.notification.data.url) || "/portal/wallet", self.location.origin).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
+      for (const client of windows) {
+        if (client.url === url && "focus" in client) return client.focus();
+      }
+      return self.clients.openWindow(url);
+    }),
+  );
 });

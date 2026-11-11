@@ -12,7 +12,7 @@ import { trackReferralClick } from "@/lib/services/referrals";
 export async function GET(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   const { code: raw } = await params;
   const code = normalizeReferralCode(decodeURIComponent(raw));
-  const register = new URL("/register", getEnv().APP_URL);
+  const register = new URL("/join", getEnv().APP_URL);
 
   let valid = false;
   if (REFERRAL_CODE_PATTERN.test(code)) {

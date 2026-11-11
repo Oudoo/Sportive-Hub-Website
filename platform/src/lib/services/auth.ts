@@ -1,6 +1,6 @@
 import qrcode from "qrcode-generator";
 import { Prisma } from "@/generated/prisma/client";
-import { dummyHash, hashPassword, verifyPassword } from "@/lib/auth/password";
+import { dummyHash, hashPassword, unusableHashMarker, verifyPassword } from "@/lib/auth/password";
 import { signPurposeToken, verifyPurposeToken } from "@/lib/auth/token";
 import { prisma } from "@/lib/db";
 import { getEnv } from "@/lib/env";
@@ -8,6 +8,7 @@ import { HttpError } from "@/lib/http";
 import { patientPayload } from "@/lib/integrations/serializers";
 import { emitEvent } from "@/lib/integrations/webhooks";
 import { applyReferral, getSettings } from "@/lib/loyalty";
+import { generateMemberCode } from "@/lib/member";
 import { generateReferralCode } from "@/lib/referral";
 import { audit } from "@/lib/security/audit";
 import type { ActionContext } from "@/lib/security/context";
@@ -41,9 +42,9 @@ function isUniqueViolationOn(error: unknown, column: string): boolean {
   );
 }
 
-/** A bcrypt hash nobody can match, for accounts that will set their password through an invitation. */
+/** A marker nobody can match, for accounts that will set their password later (invitation, or a phone-only member). */
 export async function unusablePasswordHash(): Promise<string> {
-  return hashPassword(randomToken(32));
+  return unusableHashMarker(randomToken(32));
 }
 
 // --- Registration -------------------------------------------------------------------
@@ -71,6 +72,8 @@ export async function registerPatient(input: RegisterInput, ctx: ActionContext):
             fullName: input.fullName,
             phone: input.phone,
             role: "PATIENT",
+            joinedVia: "registration",
+            memberCode: generateMemberCode(),
             referralCode: generateReferralCode(),
             lastLoginAt: new Date(),
           },
@@ -90,7 +93,7 @@ export async function registerPatient(input: RegisterInput, ctx: ActionContext):
           { path: "email", message: "Already registered. Try signing in instead." },
         ]);
       }
-      if (isUniqueViolationOn(error, "referralCode") && attempt < 3) continue;
+      if ((isUniqueViolationOn(error, "referralCode") || isUniqueViolationOn(error, "memberCode")) && attempt < 3) continue;
       throw error;
     }
   }
@@ -164,9 +167,9 @@ export async function loginUser(input: LoginInput, ctx: ActionContext): Promise<
   return { twoFactorRequired: false, user: { ...safeUser, lastLoginAt: now } };
 }
 
-async function finishLogin(userId: string, email: string, ctx: ActionContext) {
+async function finishLogin(userId: string, email: string | null, ctx: ActionContext) {
   await prisma.user.update({ where: { id: userId }, data: { failedLogins: 0, lockedUntil: null, lastLoginAt: new Date() } });
-  resetRateLimit(`login:email:${email}`);
+  if (email) resetRateLimit(`login:email:${email}`);
   await audit({ action: "auth.login", actor: { type: "USER", id: userId }, request: ctx.request });
 }
 
@@ -255,7 +258,7 @@ export async function startTwoFactorSetup(user: SafeUser) {
   const secret = generateTotpSecret();
   await prisma.user.update({ where: { id: user.id }, data: { totpSecret: encryptSecret(secret), totpEnabledAt: null } });
 
-  const uri = otpauthUri(secret, user.email);
+  const uri = otpauthUri(secret, user.email ?? user.memberCode);
   const qr = qrcode(0, "M");
   qr.addData(uri);
   qr.make();
@@ -353,7 +356,7 @@ export async function createInviteLink(userId: string, ctx: ActionContext): Prom
 }
 
 /** Who an invitation is for, so the welcome page can greet them. Null when it is not valid. */
-export async function peekInvite(token: string): Promise<Pick<SafeUser, "id" | "fullName" | "email"> | null> {
+export async function peekInvite(token: string): Promise<{ id: string; fullName: string; email: string | null } | null> {
   const claims = await verifyPurposeToken(token, "invite");
   if (!claims) return null;
   const user = await prisma.user.findUnique({ where: { id: claims.sub }, select: { id: true, fullName: true, email: true, isActive: true, sessionVersion: true } });

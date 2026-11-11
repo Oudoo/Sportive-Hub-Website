@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { requireAdminPage } from "@/lib/auth/page";
 import { TabNav } from "@/components/TabNav";
 import { PageTitle } from "@/components/ui";
 
@@ -11,7 +12,8 @@ const TABS = [
   { href: "/admin/loyalty/settings", label: "Settings & campaigns" },
 ];
 
-export default function LoyaltyLayout({ children }: { children: ReactNode }) {
+export default async function LoyaltyLayout({ children }: { children: ReactNode }) {
+  await requireAdminPage("/admin/loyalty");
   return (
     <>
       <PageTitle lede="Points, tiers, rewards and the refer-a-friend programme.">Loyalty &amp; referrals</PageTitle>

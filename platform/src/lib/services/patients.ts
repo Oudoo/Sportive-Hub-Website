@@ -4,6 +4,7 @@ import { HttpError } from "@/lib/http";
 import { patientPayload, pointsPayload } from "@/lib/integrations/serializers";
 import { emitEvent } from "@/lib/integrations/webhooks";
 import { applyReferral, getSettings, getTier, recordPoints, type Tx } from "@/lib/loyalty";
+import { generateMemberCode, normalizePhone } from "@/lib/member";
 import { generateReferralCode, normalizeReferralCode } from "@/lib/referral";
 import { searchUserIds } from "@/lib/search";
 import { audit } from "@/lib/security/audit";
@@ -58,6 +59,8 @@ const patientDetailSelect = {
   ...safeUserSelect,
   failedLogins: true,
   lockedUntil: true,
+  coursePacks: { orderBy: { purchasedAt: "desc" }, take: 10, select: { id: true, name: true, type: true, totalSessions: true, usedSessions: true, status: true, priceEgp: true, purchasedAt: true, expiresAt: true } },
+  partnerClaims: { orderBy: { createdAt: "desc" }, take: 10, select: { id: true, code: true, status: true, createdAt: true, usedAt: true, offer: { select: { partnerName: true, title: true } } } },
   referredBy: { select: { id: true, fullName: true, referralCode: true } },
   referrals: {
     select: { id: true, fullName: true, createdAt: true, referralQualifiedAt: true, _count: { select: { sessions: { where: { status: "COMPLETED" } } } } },
@@ -192,19 +195,28 @@ export async function getPatientLoyalty(id: string) {
         loyaltyPoints: true,
         lifetimePoints: true,
         referralCode: true,
+        memberCode: true,
+        stampCount: true,
+        stampCardsCompleted: true,
+        lastVisitAt: true,
         loyaltyTransactions: { orderBy: { createdAt: "desc" }, take: 50, select: { id: true, points: true, reason: true, note: true, referenceId: true, createdAt: true } },
-        redemptions: { where: { status: "PENDING" }, select: { id: true, code: true, rewardName: true, pointsSpent: true, createdAt: true } },
+        redemptions: { where: { status: "PENDING" }, select: { id: true, code: true, rewardName: true, pointsSpent: true, expiresAt: true, createdAt: true } },
+        coursePacks: { where: { status: "ACTIVE" }, select: { id: true, name: true, type: true, totalSessions: true, usedSessions: true, expiresAt: true } },
       },
     }),
   ]);
   if (!patient) throw new HttpError(404, "Patient not found");
   return {
     patientId: patient.id,
+    memberCode: patient.memberCode,
     balance: patient.loyaltyPoints,
     lifetimePoints: patient.lifetimePoints,
     tier: getTier(patient.lifetimePoints, settings),
+    stamps: { count: patient.stampCount, size: settings.stampCardSize, cardsCompleted: patient.stampCardsCompleted },
+    lastVisitAt: patient.lastVisitAt,
     referralCode: patient.referralCode,
     pendingVouchers: patient.redemptions,
+    activePacks: patient.coursePacks.map((p) => ({ ...p, remaining: Math.max(0, p.totalSessions - p.usedSessions) })),
     transactions: patient.loyaltyTransactions,
   };
 }
@@ -266,9 +278,11 @@ export async function upsertPatient(input: V1PatientUpsertInput, ctx: ActionCont
         email: input.email,
         passwordHash,
         fullName: input.fullName,
-        phone: input.phone ?? undefined,
+        phone: input.phone ? (normalizePhone(input.phone) ?? input.phone) : undefined,
         role: "PATIENT",
         isActive: input.isActive ?? true,
+        joinedVia: ctx.actor.type === "API_KEY" ? "api" : "staff",
+        memberCode: generateMemberCode(),
         referralCode: generateReferralCode(),
         externalSource: input.externalSource,
         externalId: input.externalId,

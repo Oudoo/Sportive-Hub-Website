@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireAdminPage } from "@/lib/auth/page";
 import { UpdateForm } from "@/components/admin/UpdateForm";
 import { UpdateRowActions } from "@/components/admin/UpdateRowActions";
 import { Badge, Card, Empty, PageTitle } from "@/components/ui";
@@ -8,6 +9,7 @@ import { listUpdates } from "@/lib/services/updates";
 export const metadata: Metadata = { title: "Updates" };
 
 export default async function UpdatesPage() {
+  await requireAdminPage("/admin/updates");
   const updates = await listUpdates({ publishedOnly: false, page: 1, perPage: 50 });
 
   return (

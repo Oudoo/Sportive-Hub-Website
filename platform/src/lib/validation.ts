@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   Branch,
+  CheckInMethod,
   LoyaltyReason,
   PaymentMethod,
   RedemptionStatus,
@@ -11,7 +12,7 @@ import {
   Tier,
   UpdateKind,
 } from "@/generated/prisma/client";
-import { CAMPAIGN_SEGMENTS, type CampaignSegment } from "@/lib/format";
+import { CAMPAIGN_SEGMENTS, FOCUS_AREAS, JOIN_SOURCES, type CampaignSegment } from "@/lib/format";
 import { REFERRAL_CODE_PATTERN, normalizeReferralCode } from "@/lib/referral";
 
 /** Request-body and query schemas. Each API route validates with exactly one of these. */
@@ -115,6 +116,10 @@ export const sessionCreateSchema = z.object({
   isComplimentary: z.boolean().default(false),
   /** Creating a session as COMPLETED awards points at once (integrations syncing past visits). */
   status: z.enum(SessionStatus).default("SCHEDULED"),
+  /** Take this session from one of the patient's prepaid course packs. */
+  coursePackId: z.preprocess(emptyToNull, z.string().min(1).nullable().optional()),
+  roomNumber: z.preprocess(emptyToNull, z.coerce.number().int().min(1).max(20).nullable().optional()),
+  checkInMethod: z.preprocess(emptyToUndefined, z.enum(CheckInMethod).optional()),
   ...paymentFields,
 });
 export type SessionCreateInput = z.infer<typeof sessionCreateSchema>;
@@ -168,7 +173,13 @@ export const settingsSchema = z
     sessionPoints: z.coerce.number().int().min(0).max(10_000),
     welcomePoints: z.coerce.number().int().min(0).max(10_000),
     referralPoints: z.coerce.number().int().min(0).max(10_000),
+    painMapPoints: z.coerce.number().int().min(0).max(10_000),
     referralTrigger: z.enum(ReferralTrigger),
+    stampCardSize: z.coerce.number().int().min(2).max(12),
+    stampRewardId: z.preprocess(emptyToNull, z.string().min(1).max(32).nullable()),
+    voucherValidityDays: z.coerce.number().int().min(1).max(3650),
+    atRiskDays: z.coerce.number().int().min(1).max(365),
+    churnDays: z.coerce.number().int().min(2).max(3650),
     silverMin: z.coerce.number().int().min(1).max(1_000_000),
     goldMin: z.coerce.number().int().min(2).max(1_000_000),
     silverBonusPercent: z.coerce.number().int().min(0).max(500),
@@ -181,6 +192,10 @@ export const settingsSchema = z
   .refine((d) => d.silverMin === undefined || d.goldMin === undefined || d.goldMin > d.silverMin, {
     path: ["goldMin"],
     message: "Gold must need more points than Silver",
+  })
+  .refine((d) => d.atRiskDays === undefined || d.churnDays === undefined || d.churnDays > d.atRiskDays, {
+    path: ["churnDays"],
+    message: "Churned must come after at risk",
   });
 export type SettingsInput = z.infer<typeof settingsSchema>;
 
@@ -283,6 +298,174 @@ export const auditQuerySchema = paginationSchema.extend({
   action: optionalText(64),
   actorId: optionalText(64),
   q: optionalText(120),
+});
+
+// --- Membership, wallet and scanner ---------------------------------------
+
+export { FOCUS_AREAS, JOIN_SOURCES };
+
+/** Passwordless join: name + phone, from the website, the pain map or a counter QR. */
+export const joinSchema = z.object({
+  fullName: z.string().trim().min(2, "Enter your name").max(120),
+  phone: z.string().trim().min(8, "Enter your mobile number").max(32),
+  email: z.preprocess(emptyToUndefined, z.email("Enter a valid email").max(255).transform((v) => v.toLowerCase()).optional()),
+  referralCode: referralCodeField,
+  focusArea: z.preprocess(emptyToUndefined, z.enum(FOCUS_AREAS).optional()),
+  preferredBranch: z.preprocess(emptyToUndefined, z.enum(Branch).optional()),
+  /** Where the sign-up came from, for the funnel. "painmap" also earns the movement starter bonus. */
+  source: z.preprocess(emptyToUndefined, z.enum(JOIN_SOURCES).optional()),
+});
+export type JoinInput = z.infer<typeof joinSchema>;
+
+export const memberSearchSchema = z.object({ q: z.string().trim().min(1).max(120) });
+export const feedQuerySchema = z.object({ branch: z.preprocess(emptyToUndefined, z.enum(Branch).optional()) });
+export const packsQuerySchema = paginationSchema.extend({
+  userId: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
+  patientId: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
+  status: z.preprocess(emptyToUndefined, z.enum(["ACTIVE", "COMPLETED", "EXPIRED", "CANCELLED"]).optional()),
+});
+export const pushUnsubscribeSchema = z.object({ endpoint: z.url().max(500) });
+
+export const checkInSchema = z.object({
+  branch: z.enum(Branch).default("SHEIKH_ZAYED"),
+  roomNumber: z.preprocess(emptyToUndefined, z.coerce.number().int().min(1).max(20).optional()),
+  method: z.enum(["NFC_TAG", "QR_SELF"]).default("NFC_TAG"),
+});
+
+export const scannerInspectSchema = z.object({
+  code: z.string().trim().min(2).max(200),
+});
+
+export const scannerActionSchema = z.discriminatedUnion("action", [
+  z.object({
+    action: z.literal("LOG_SESSION"),
+    memberId: z.string().min(1),
+    type: z.enum(SessionType),
+    branch: z.enum(Branch).default("SHEIKH_ZAYED"),
+    roomNumber: z.preprocess(emptyToUndefined, z.coerce.number().int().min(1).max(20).optional()),
+    coursePackId: z.preprocess(emptyToNull, z.string().min(1).nullable().optional()),
+    practitioner: optionalText(120),
+    paid: z.boolean().optional(),
+    amountPaid: z.preprocess(emptyToNull, z.coerce.number().int().min(0).max(10_000_000).nullable().optional()),
+    paymentMethod: z.preprocess(emptyToNull, z.enum(PaymentMethod).nullable().optional()),
+    checkInId: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
+  }),
+  z.object({ action: z.literal("REDEEM_VOUCHER"), code: z.string().trim().min(4).max(20) }),
+  z.object({ action: z.literal("USE_PARTNER_COUPON"), code: z.string().trim().min(4).max(20) }),
+  z.object({
+    action: z.literal("CONFIRM_PAYMENT"),
+    sessionId: z.string().min(1),
+    amountPaid: z.preprocess(emptyToNull, z.coerce.number().int().min(0).max(10_000_000).nullable().optional()),
+    paymentMethod: z.preprocess(emptyToNull, z.enum(PaymentMethod).nullable().optional()),
+  }),
+]);
+export type ScannerAction = z.infer<typeof scannerActionSchema>;
+
+export const packageTemplateSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  type: z.enum(SessionType),
+  sessions: z.coerce.number().int().min(1).max(100),
+  priceEgp: z.preprocess(emptyToNull, z.coerce.number().int().min(0).max(10_000_000).nullable().optional()),
+  description: nullableText(255),
+  isActive: z.boolean().default(true),
+  sortOrder: z.coerce.number().int().min(0).max(10_000).default(0),
+});
+export type PackageTemplateInput = z.infer<typeof packageTemplateSchema>;
+
+export const sellPackSchema = z.object({
+  patientId: z.string().min(1, "Choose a patient"),
+  templateId: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
+  /** Without a template: name, type and sessions describe the pack. */
+  name: optionalText(120),
+  type: z.preprocess(emptyToUndefined, z.enum(SessionType).optional()),
+  sessions: z.preprocess(emptyToUndefined, z.coerce.number().int().min(1).max(100).optional()),
+  priceEgp: z.preprocess(emptyToNull, z.coerce.number().int().min(0).max(10_000_000).nullable().optional()),
+  paid: z.boolean().default(true),
+  paymentMethod: z.preprocess(emptyToNull, z.enum(PaymentMethod).nullable().optional()),
+  expiresInDays: z.preprocess(emptyToUndefined, z.coerce.number().int().min(1).max(3650).optional()),
+  notes: optionalText(255),
+});
+export type SellPackInput = z.infer<typeof sellPackSchema>;
+
+export const packUpdateSchema = z.object({
+  status: z.enum(["ACTIVE", "CANCELLED", "EXPIRED"]).optional(),
+  usedSessions: z.coerce.number().int().min(0).max(100).optional(),
+  totalSessions: z.coerce.number().int().min(1).max(100).optional(),
+  expiresAt: z.preprocess(emptyToNull, z.coerce.date().nullable().optional()),
+  notes: nullableText(255),
+});
+export type PackUpdateInput = z.infer<typeof packUpdateSchema>;
+
+export const partnerOfferSchema = z.object({
+  partnerName: z.string().trim().min(2).max(120),
+  zone: z.enum(["SHEIKH_ZAYED", "ALMAZA_BAY", "ALL"]).default("ALL"),
+  kind: z.enum(["GIFT", "DISCOUNT"]).default("DISCOUNT"),
+  title: z.string().trim().min(2).max(120),
+  badge: nullableText(24),
+  description: nullableText(500),
+  terms: nullableText(500),
+  emoji: nullableText(16),
+  url: z.preprocess(emptyToNull, z.url().max(500).nullable().optional()),
+  minTier: z.enum(Tier).default("BRONZE"),
+  isActive: z.boolean().default(true),
+  sortOrder: z.coerce.number().int().min(0).max(10_000).default(0),
+  validUntil: z.preprocess(emptyToNull, z.coerce.date().nullable().optional()),
+});
+export type PartnerOfferInput = z.infer<typeof partnerOfferSchema>;
+
+export const crmQuerySchema = paginationSchema.extend({
+  status: z.preprocess(emptyToUndefined, z.enum(["NEW", "REGULAR", "PACK_LOW", "AT_RISK", "CHURNED"]).optional()),
+  branch: z.preprocess(emptyToUndefined, z.enum(Branch).optional()),
+  q: optionalText(120),
+});
+
+export const pushSubscribeSchema = z.object({
+  endpoint: z.url().max(500),
+  keys: z.object({ p256dh: z.string().min(10).max(255), auth: z.string().min(5).max(255) }),
+});
+
+export const pushSendSchema = z.object({
+  title: z.string().trim().min(2).max(80),
+  body: z.string().trim().min(2).max(240),
+  url: z.preprocess(emptyToUndefined, z.string().trim().max(200).regex(/^\//, "Use a path on this site, e.g. /portal/wallet").optional()),
+  segment: z.enum(["ALL", "TIER_SILVER_UP", "TIER_GOLD", "AT_RISK", "CHURNED", "PATIENT"]).default("ALL"),
+  patientId: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
+});
+export type PushSendInput = z.infer<typeof pushSendSchema>;
+
+export const teamCreateSchema = z.object({
+  fullName: z.string().trim().min(2).max(120),
+  email,
+  role: z.enum(["ADMIN", "STAFF"]).default("STAFF"),
+  phone,
+  preferredBranch: z.preprocess(emptyToUndefined, z.enum(Branch).optional()),
+});
+export type TeamCreateInput = z.infer<typeof teamCreateSchema>;
+
+export const teamUpdateSchema = z
+  .object({
+    fullName: z.string().trim().min(2).max(120),
+    role: z.enum(["ADMIN", "STAFF"]),
+    isActive: z.boolean(),
+    preferredBranch: z.preprocess(emptyToNull, z.enum(Branch).nullable()),
+  })
+  .partial();
+export type TeamUpdateInput = z.infer<typeof teamUpdateSchema>;
+
+export const profileUpdateSchema = z
+  .object({
+    fullName: z.string().trim().min(2).max(120),
+    phone: z.preprocess(emptyToNull, z.string().trim().min(8).max(32).nullable()),
+    email,
+    preferredBranch: z.preprocess(emptyToNull, z.enum(Branch).nullable()),
+  })
+  .partial();
+export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;
+
+/** A passwordless member choosing a password so they can also sign in with email. */
+export const setPasswordSchema = z.object({
+  email,
+  password,
 });
 
 // --- Public API (v1) --------------------------------------------------------

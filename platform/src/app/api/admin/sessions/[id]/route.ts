@@ -1,4 +1,4 @@
-import { requireAdmin } from "@/lib/auth/session";
+import { requireAdmin, requireStaff } from "@/lib/auth/session";
 import { ok, parseJson, route, type IdContext } from "@/lib/http";
 import { userContext } from "@/lib/security/context";
 import { deleteSession, getSession, updateSession } from "@/lib/services/sessions";
@@ -6,7 +6,7 @@ import { sessionUpdateSchema } from "@/lib/validation";
 
 /** GET /api/admin/sessions/:id */
 export const GET = route<IdContext>(async (_request, { params }) => {
-  await requireAdmin();
+  await requireStaff();
   const { id } = await params;
   return ok(await getSession(id));
 });
@@ -16,10 +16,10 @@ export const GET = route<IdContext>(async (_request, { params }) => {
  * awards attendance points to the patient the first time (tier and promotion included).
  */
 export const PUT = route<IdContext>(async (request, { params }) => {
-  const admin = await requireAdmin();
+  const staff = await requireStaff();
   const { id } = await params;
   const input = await parseJson(request, sessionUpdateSchema);
-  return ok(await updateSession(id, input, userContext(admin, request)));
+  return ok(await updateSession(id, input, userContext(staff, request)));
 });
 
 /** DELETE /api/admin/sessions/:id */

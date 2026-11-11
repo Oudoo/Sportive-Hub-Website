@@ -18,7 +18,9 @@ type Reward = {
   blocker: string | null;
 };
 
-type Redemption = { id: string; code: string; rewardName: string; pointsSpent: number; status: "PENDING" | "FULFILLED" | "CANCELLED"; createdAt: string };
+type Redemption = { id: string; code: string; rewardName: string; pointsSpent: number; status: "PENDING" | "FULFILLED" | "CANCELLED" | "EXPIRED"; createdAt: string };
+
+const PAST_LABELS: Record<Redemption["status"], string> = { PENDING: "", FULFILLED: "Used", CANCELLED: "Cancelled, points refunded", EXPIRED: "Expired, points refunded" };
 
 /** The rewards a patient can claim, and the vouchers they hold. */
 export function RewardsCatalog({ rewards, redemptions, balance }: { rewards: Reward[]; redemptions: Redemption[]; balance: number }) {
@@ -137,7 +139,7 @@ export function RewardsCatalog({ rewards, redemptions, balance }: { rewards: Rew
                 <span>
                   {r.rewardName} · <Code>{r.code}</Code>
                 </span>
-                <span className="text-olive">{r.status === "FULFILLED" ? "Used" : "Cancelled, points refunded"}</span>
+                <span className="text-olive">{PAST_LABELS[r.status]}</span>
               </li>
             ))}
           </ul>

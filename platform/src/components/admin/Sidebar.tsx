@@ -5,30 +5,38 @@ import { usePathname } from "next/navigation";
 import { LogoutButton } from "@/components/LogoutButton";
 import { InstallAppButton } from "@/components/pwa/InstallAppButton";
 
-const NAV: ReadonlyArray<{ href: string; label: string; exact?: boolean }> = [
-  { href: "/admin", label: "Overview", exact: true },
+type Item = { href: string; label: string; exact?: boolean; adminOnly?: boolean };
+
+const NAV: ReadonlyArray<Item> = [
+  { href: "/admin", label: "Overview", exact: true, adminOnly: true },
+  { href: "/admin/scanner", label: "Scanner" },
   { href: "/admin/sessions", label: "Sessions" },
   { href: "/admin/patients", label: "Patients" },
-  { href: "/admin/loyalty", label: "Loyalty & referrals" },
-  { href: "/admin/updates", label: "Updates" },
-  { href: "/admin/integrations", label: "Integrations" },
-  { href: "/admin/activity", label: "Activity log" },
+  { href: "/admin/packs", label: "Course packs" },
+  { href: "/admin/crm", label: "Regulars & WhatsApp" },
+  { href: "/admin/loyalty", label: "Loyalty & referrals", adminOnly: true },
+  { href: "/admin/partners", label: "Partner perks", adminOnly: true },
+  { href: "/admin/team", label: "Team", adminOnly: true },
+  { href: "/admin/updates", label: "Updates", adminOnly: true },
+  { href: "/admin/integrations", label: "Integrations", adminOnly: true },
+  { href: "/admin/activity", label: "Activity log", adminOnly: true },
 ];
 
-/** Sidebar on desktop, top bar on phones. Highlights the current section. */
-export function Sidebar({ userName, twoFactorOn }: { userName: string; twoFactorOn: boolean }) {
+/** Sidebar on desktop, top bar on phones. Highlights the current section. Staff see the front-desk pages only. */
+export function Sidebar({ userName, role, twoFactorOn }: { userName: string; role: "ADMIN" | "STAFF"; twoFactorOn: boolean }) {
   const pathname = usePathname();
+  const items = NAV.filter((item) => role === "ADMIN" || !item.adminOnly);
 
   return (
-    <aside className="flex flex-col gap-4 bg-olive px-4 py-5 text-milk md:sticky md:top-0 md:h-screen md:px-6 md:py-8">
-      <Link href="/admin" className="flex items-center gap-3">
+    <aside className="flex flex-col gap-4 bg-olive px-4 py-5 text-milk md:sticky md:top-0 md:h-screen md:overflow-y-auto md:px-6 md:py-8">
+      <Link href={role === "ADMIN" ? "/admin" : "/admin/scanner"} className="flex items-center gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
         <img src="/logo-milk.png" alt="Sportive Hub" className="h-8 w-auto" />
       </Link>
-      <div className="text-[11px] uppercase tracking-[0.2em] text-pastel">Admin dashboard</div>
+      <div className="text-[11px] uppercase tracking-[0.2em] text-pastel">{role === "ADMIN" ? "Admin dashboard" : "Front desk"}</div>
 
       <nav aria-label="Admin sections" className="flex flex-wrap gap-1 md:mt-4 md:flex-col">
-        {NAV.map((item) => {
+        {items.map((item) => {
           const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
           return (
             <Link
