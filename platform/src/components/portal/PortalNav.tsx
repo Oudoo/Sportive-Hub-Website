@@ -31,7 +31,7 @@ export function PortalNav({ userName, pendingVouchers, teamLink }: { userName: s
 
   return (
     <header className="sticky top-0 z-40 border-b border-charcoal/15 bg-milk/95 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4 px-4 py-3 md:px-8 md:py-4">
+      <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-3 md:px-8 md:py-4">
         <Link href="/portal/wallet" className="flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
           <img src="/logo.png" alt="Sportive Hub" className="h-8 w-auto" />
@@ -42,7 +42,7 @@ export function PortalNav({ userName, pendingVouchers, teamLink }: { userName: s
           {NAV.map((item) => {
             const active = isActive(item);
             return (
-              <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={cx("flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors", active ? "bg-olive text-milk" : "text-olive hover:bg-pastel/50 hover:text-charcoal")}>
+              <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={cx("flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-sm transition-colors", active ? "bg-olive text-milk" : "text-olive hover:bg-pastel/50 hover:text-charcoal")}>
                 <NavIcon name={item.icon} className="size-4" />
                 {item.label}
                 {item.href === "/portal/wallet" && pendingVouchers > 0 && <span className={cx("rounded-full px-1.5 text-[10px]", active ? "bg-milk text-olive" : "bg-olive text-milk")}>{pendingVouchers}</span>}
@@ -51,17 +51,18 @@ export function PortalNav({ userName, pendingVouchers, teamLink }: { userName: s
           })}
         </nav>
 
-        <div className="hidden items-center gap-3 text-sm md:flex">
+        <div className="hidden shrink-0 items-center gap-2 text-sm md:flex">
           {teamLink && (
-            <Link href={teamLink.href} className="text-olive underline underline-offset-4">
+            <Link href={teamLink.href} className="whitespace-nowrap text-olive underline underline-offset-4">
               {teamLink.label}
             </Link>
           )}
-          <Link href="/account" className="text-olive underline underline-offset-4">
-            {userName}
+          <Link href="/account" title={userName} aria-label="Account" className="flex items-center gap-1.5 rounded-full px-2 py-1.5 text-olive hover:bg-pastel/50 hover:text-charcoal">
+            <NavIcon name="account" className="size-5" />
+            <span className="hidden max-w-[10rem] truncate lg:inline">{userName}</span>
           </Link>
-          <InstallAppButton />
-          <LogoutButton />
+          <InstallAppButton className="px-2" />
+          <LogoutButton className="px-2" />
         </div>
 
         {/* Phones: the current section and the menu button */}
