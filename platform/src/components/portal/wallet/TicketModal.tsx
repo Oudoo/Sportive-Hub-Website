@@ -60,7 +60,7 @@ export function TicketModal({ ticket, onClose }: { ticket: Ticket | null; onClos
       aria-label={ticket?.title ?? "Ticket"}
     >
       {ticket && (
-        <div className="overflow-hidden rounded-2xl bg-mist" style={{ "--ticket-bg": "#0b1a12" } as CSSProperties}>
+        <div className="overflow-hidden rounded-2xl bg-mist" style={{ "--ticket-bg": "#26251f" } as CSSProperties}>
           <div className="p-6">
             <div className="flex items-start justify-between gap-3">
               <div className="text-[11px] uppercase tracking-[0.2em] text-pine">{ticket.kind === "coupon" ? "Partner coupon" : "Reward voucher"}</div>

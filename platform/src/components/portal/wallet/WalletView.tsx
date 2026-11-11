@@ -22,8 +22,8 @@ type Notice = { tone: "good" | "bad"; text: string };
 
 const TIER_STYLE: Record<string, string> = {
   BRONZE: "bg-mist/10 text-mist",
-  SILVER: "bg-mist/80 text-ink",
-  GOLD: "bg-amber-300 text-ink",
+  SILVER: "bg-pastel text-charcoal",
+  GOLD: "bg-sand text-charcoal",
 };
 
 function Section({ title, hint, children, action }: { title: string; hint?: string; children: React.ReactNode; action?: React.ReactNode }) {
@@ -165,7 +165,7 @@ export function WalletView({ data, prefill }: { data: WalletJson; prefill: Check
               <div className="mt-1 text-sm text-mist/70">points</div>
               <div className="mt-3 text-xs text-mist/70">
                 +{data.points.perSession} per session
-                {data.points.promo && <span className="ml-1 rounded-full bg-amber-300/20 px-2 py-0.5 text-amber-200">{data.points.promo.label ?? "Bonus"} ×{data.points.promo.multiplierPercent / 100}</span>}
+                {data.points.promo && <span className="ml-1 rounded-full bg-sand/25 px-2 py-0.5 text-sand">{data.points.promo.label ?? "Bonus"} ×{data.points.promo.multiplierPercent / 100}</span>}
               </div>
               {data.nextReward && <div className="mt-1 text-xs text-leaf">{data.nextReward}</div>}
             </div>

@@ -7,12 +7,12 @@
   --color-milk: #f0ece3;
   --color-pastel: #c9d6b8;
   --color-charcoal: #282828;
-  /* Wallet palette: the member pass, tickets and the scanner run dark emerald. */
-  --color-ink: #030705;
-  --color-emerald: #208a53;
-  --color-pine: #2c6654;
-  --color-leaf: #50a24a;
-  --color-mist: #f1f5f3;
+  /* Wallet palette: the member pass, tickets and the scanner, in the brand colours on a dark card. */
+  --color-ink: #26251f;
+  --color-emerald: #595641;
+  --color-pine: #767257;
+  --color-leaf: #baa48d;
+  --color-mist: #f0ece3;
   --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-serif: "Instrument Serif", Georgia, "Times New Roman", serif;
 }
@@ -27,7 +27,7 @@ body {
 .ticket-tear {
   position: relative;
   height: 0;
-  border-top: 2px dashed rgba(3, 7, 5, 0.25);
+  border-top: 2px dashed rgba(38, 37, 31, 0.25);
 }
 .ticket-tear::before,
 .ticket-tear::after {
