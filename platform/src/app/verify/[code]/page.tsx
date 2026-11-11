@@ -34,7 +34,7 @@ export default async function VerifyPage({ params }: { params: Promise<{ code: s
               <p className="mt-1 text-sm text-pine">For {coupon.memberFirstName}, a Sportive Hub member</p>
               {coupon.terms && <p className="mt-3 text-xs leading-relaxed text-ink/70">{coupon.terms}</p>}
             </div>
-            <div className="ticket-tear" style={{ "--ticket-bg": "#030705" } as React.CSSProperties} />
+            <div className="ticket-tear" style={{ "--ticket-bg": "#26251f" } as React.CSSProperties} />
             <div className="ticket-scallop bg-mist px-6 pb-8 pt-5">
               <div className="flex items-center justify-between gap-3">
                 <div>
