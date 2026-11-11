@@ -14,7 +14,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   if (user.role === "PATIENT") redirect("/portal/wallet");
 
   return (
-    <div className="flex min-h-screen flex-col md:grid md:grid-cols-[240px_minmax(0,1fr)]">
+    <div className="flex min-h-screen flex-col md:grid md:grid-cols-[250px_minmax(0,1fr)]">
       <Sidebar userName={user.fullName} role={user.role} twoFactorOn={!!user.totpEnabledAt} />
       <main className="w-full max-w-6xl px-4 py-6 md:px-10 md:py-10">{children}</main>
     </div>
